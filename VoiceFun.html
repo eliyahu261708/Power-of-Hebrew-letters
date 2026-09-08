@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Discover Your Hebrew Name</title>
+<style>
+:root{--bg:#05080f;--gold:#d8b45a;--gold2:#f0d98d;--text:#f7f3e8;--muted:#aeb7c7;--line:rgba(216,180,90,.25)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 15%,rgba(42,63,105,.33),transparent 30%),var(--bg);color:var(--text);font-family:Arial,Segoe UI,sans-serif}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:min(760px,100%);text-align:center}
+.brand{color:var(--gold2);font-size:14px;letter-spacing:.22em;margin-bottom:24px}
+h1{font-size:clamp(34px,7vw,60px);line-height:1.05;margin:0 0 14px}
+.sub{color:var(--muted);font-size:18px;line-height:1.5;margin:0 auto 38px;max-width:580px}
+.mic{width:128px;height:128px;border-radius:50%;border:1px solid var(--gold);background:#0d1423;color:var(--gold2);display:inline-grid;place-items:center;cursor:pointer;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+.mic svg{width:48px;height:48px;fill:currentColor}
+.mic.listening{animation:pulse 1.25s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(216,180,90,.35)}70%{box-shadow:0 0 0 28px rgba(216,180,90,0)}100%{box-shadow:0 0 0 0 rgba(216,180,90,0)}}
+.hint{margin-top:17px;color:var(--gold2);letter-spacing:.08em;font-size:15px}
+.status{margin-top:16px;min-height:44px;color:var(--muted);font-size:14px;line-height:1.45}
+.result{display:none;margin-top:34px;padding:28px 22px;border:1px solid var(--line);border-radius:22px;background:rgba(10,16,30,.86)}
+.heard{font-size:14px;color:var(--muted);margin-bottom:12px}
+.hebrew{direction:rtl;font-size:clamp(56px,12vw,92px);font-weight:700;color:var(--gold2);line-height:1.15}
+.letters{direction:rtl;margin-top:15px;font-size:20px}
+.value{margin-top:10px;color:var(--muted)}
+.retry{margin-top:20px;background:none;border:0;color:var(--gold2);text-decoration:underline;cursor:pointer;font-size:14px}
+.note{margin-top:28px;color:#768195;font-size:12px;line-height:1.45}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">מא-ת ה׳שם</div>
+  <h1>Discover Your Name in Hebrew</h1>
+  <p class="sub">Hold the microphone, say your name, then release.</p>
+
+  <button id="mic" class="mic" type="button" aria-label="Say your name">
+    <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/></svg>
+  </button>
+  <div class="hint">HOLD TO SPEAK</div>
+  <div id="status" class="status">Ready.</div>
+
+  <section id="result" class="result">
+    <div id="heard" class="heard"></div>
+    <div id="hebrew" class="hebrew"></div>
+    <div id="letters" class="letters"></div>
+    <div id="value" class="value"></div>
+    <button id="retry" class="retry" type="button">Say it again</button>
+  </section>
+
+  <div class="note">Hold to record • Release to finish</div>
+</main>
+
+<script>
+const mic = document.getElementById("mic");
+const statusEl = document.getElementById("status");
+const result = document.getElementById("result");
+
+let mediaRecorder = null;
+let stream = null;
+let chunks = [];
+let recording = false;
+let pointerId = null;
+
+async function beginRecording(e){
+  e.preventDefault();
+  if(recording) return;
+
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks = [];
+
+    const options = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+      ? {mimeType:"audio/webm;codecs=opus"} : {};
+
+    mediaRecorder = new MediaRecorder(stream, options);
+
+    mediaRecorder.ondataavailable = ev => {
+      if(ev.data && ev.data.size) chunks.push(ev.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, {type: mediaRecorder.mimeType || "audio/webm"});
+      stream?.getTracks().forEach(t => t.stop());
+      stream = null;
+      recording = false;
+      mic.classList.remove("listening");
+
+      if(blob.size < 500){
+        statusEl.textContent = "Too short — hold the button while saying your name.";
+        return;
+      }
+
+      statusEl.textContent = "Recording complete ✓";
+      result.style.display = "block";
+      document.getElementById("heard").textContent = "Your voice was recorded successfully.";
+      document.getElementById("hebrew").textContent = "✓";
+      document.getElementById("letters").textContent = "Ready for Hebrew transcription";
+      document.getElementById("value").textContent =
+        "Next step: connect this recording to the phonetic AI engine.";
+    };
+
+    mediaRecorder.start();
+    recording = true;
+    pointerId = e.pointerId;
+    try { mic.setPointerCapture(pointerId); } catch(_){}
+    mic.classList.add("listening");
+    statusEl.textContent = "LISTENING… release when finished.";
+  }catch(err){
+    statusEl.textContent = "Microphone error: " + err.message;
+  }
+}
+
+function endRecording(e){
+  e.preventDefault();
+  if(!recording || !mediaRecorder) return;
+  if(mediaRecorder.state === "recording") mediaRecorder.stop();
+  try{
+    if(pointerId !== null && mic.hasPointerCapture(pointerId))
+      mic.releasePointerCapture(pointerId);
+  }catch(_){}
+  pointerId = null;
+  statusEl.textContent = "PROCESSING…";
+}
+
+mic.addEventListener("pointerdown", beginRecording);
+mic.addEventListener("pointerup", endRecording);
+mic.addEventListener("pointercancel", endRecording);
+mic.addEventListener("contextmenu", e => e.preventDefault());
+
+document.getElementById("retry").addEventListener("click", () => {
+  result.style.display = "none";
+  statusEl.textContent = "Hold the microphone while saying your name.";
+});
+
+statusEl.textContent = "Hold the microphone while saying your name.";
+</script>
+</body>
+</html>
