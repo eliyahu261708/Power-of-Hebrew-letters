@@ -1072,8 +1072,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const menu = picker.querySelector(".custom-lang-menu");
 
   function cleanLabel(text){
-    return text.replace(/^[A-Z]{2}\s+/, "").trim();
-  }
+  return text.replace(/^[A-Z]{2}\s+/, "").replace(/^[\p{Regional_Indicator}\uFE0F\u200D]+\s*/u, "").trim();  }
 
   function flagImg(code){
     const cc = flagCodes[code] || "un";
