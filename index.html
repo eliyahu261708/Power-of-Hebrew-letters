@@ -370,7 +370,7 @@ tbody tr:hover{background:rgba(255,255,255,.04)}
 
 
 <style>
-/* Custom language menu so country flags render reliably on Windows */
+/* Custom language menu so country  render reliably on Windows */
 #languageSelect{position:absolute!important;opacity:0!important;pointer-events:none!important;width:1px!important;height:1px!important}
 .custom-lang-picker{position:relative;min-width:235px;font-size:17px}
 .custom-lang-btn{width:100%;min-height:46px;padding:9px 13px;border:1px solid #33414d;border-radius:10px;background:#101923;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:17px;cursor:pointer}
@@ -396,7 +396,7 @@ tbody tr:hover{background:rgba(255,255,255,.04)}
 
 
 <style>
-/* FINAL language menu: elegant dark list with real flags */
+/* FINAL language menu: elegant dark list with real  */
 .custom-lang-picker{
   position:relative!important;
   min-width:235px!important;
@@ -856,7 +856,7 @@ const ui = {
   vi:{name:"Tiếng Việt",lesson:"BÀI 001",finalNote:"Một số chữ Hebrew có dạng cuối, chỉ được dùng ở cuối từ.",watch:"Xem bài học video",back:"Lên đầu trang",title:"Bảng chữ cái Hebrew",letter:"Chữ Hebrew",nameh:"Tên tiếng Hebrew",gem:"Giá trị Gematria",pron:"Phát âm",print:"In",note:"Các chữ Hebrew và tên gốc bằng tiếng Hebrew được giữ nguyên. Cách phát âm được hiển thị bằng ngôn ngữ của bạn.",footer:"Bạn có thể đổi ngôn ngữ bất cứ lúc nào."}
 };
 
-const flags = {
+const  = {
   en:"🇺🇸", ar:"🇸🇦", bn:"🇧🇩", zh:"🇨🇳", nl:"🇳🇱", fil:"🇵🇭",
   fr:"🇫🇷", de:"🇩🇪", el:"🇬🇷", hi:"🇮🇳", id:"🇮🇩", it:"🇮🇹",
   ja:"🇯🇵", ko:"🇰🇷", ms:"🇲🇾", fa:"🇮🇷", pl:"🇵🇱", pt:"🇵🇹",
@@ -876,7 +876,7 @@ const tbody = document.getElementById("tbody");
 function addOptions(){
   langOrder.forEach(code=>{
     const o=document.createElement("option");
-    o.value=code; o.textContent=`${flags[code]}  ${ui[code].name}`;
+    o.value=code; o.textContent=`${ui[code].name}`;
     select.appendChild(o);
   });
 }
