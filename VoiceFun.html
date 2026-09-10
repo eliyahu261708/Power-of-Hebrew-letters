@@ -1020,7 +1020,7 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
   <section class="voice-card">
     <p id="sub" class="sub"></p>
     <div class="dual-inputs">
-      <div class="required-field"><div id="recordLabel" class="field-label"></div><button id="mic" class="mic" type="button" aria-label="Hold to speak">
+      <div class="required-field"><div id="recordLabel" class="field-label"></div><button id="mic" class="mic" type="button" aria-label="Record your name">
       <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/></svg>
     </button><div id="hold" class="hold"></div><div id="recordCheck" class="field-check"></div></div>
       <div class="required-field"><label id="typeLabel" class="field-label" for="typedName"></label><input id="typedName" class="name-input" type="text" autocomplete="name" spellcheck="false" inputmode="text" autocapitalize="words"><div id="typeCheck" class="field-check"></div></div>
@@ -1272,186 +1272,156 @@ ur:{mismatch:"ریکارڈنگ اور ٹائپ کیا گیا نام مطابقت
 vi:{mismatch:"Bản ghi âm và tên đã nhập không khớp. Hãy kiểm tra tên hoặc ghi âm lại.",listen:"Nghe bản ghi",again:"Ghi âm lại",hearName:"Nghe tên"}
 };
 let recordedName="";
-function normalizeHeb(s){return toHebrewName(s).replace(/[׳״\s]/g,"");}
+function hebrewCandidate(s){return toHebrewName(String(s||"").replace(/[’']/g,"׳")).trim();}
+function compareKey(s){return hebrewCandidate(s).replace(/[׳״\s-]/g,"");}
 function levenshtein(a,b){a=[...a];b=[...b];const d=Array(b.length+1).fill(0).map((_,j)=>j);for(let i=1;i<=a.length;i++){let prev=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const old=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=old}}return d[b.length]}
-function updateDualState(){document.getElementById('status')?.classList.remove('error-message');const u=UX[sel.value]||UX.en;const typed=document.getElementById('typedName').value.trim();const hasRecording=!!recordedAudioUrl;const rc=document.getElementById('recordCheck');if(hasRecording){const parts=String(u.recorded||'').split('✓');rc.textContent=parts[0].trimEnd()+' ';const mark=document.createElement('span');mark.className='recording-ok-check';mark.textContent='✓';rc.appendChild(mark);}else{rc.textContent='';}document.getElementById('typeCheck').textContent=typed?u.typed:'';document.getElementById('discoverBtn').disabled=!(hasRecording&&typed);}
-function speakHebrew(text){if(!('speechSynthesis'in window))return; speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang="he-IL";x.rate=.78;speechSynthesis.speak(x)}
-function renderFinalHebrew(hebrew,source){const code=sel.value||"en",t=T[code]||T.en;const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);const hebEl=document.getElementById("hebrew");hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById("resultAudioBtn").onclick=()=>speakHebrew(hebrew);const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display="block";document.getElementById("choices").hidden=true;statusEl.textContent="";}
-function showChoices(cands){const u=UX[sel.value]||UX.en,box=document.getElementById("choices");box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div><div class="choice-hint">'+escapeHtml(document.getElementById("typedName").value.trim())+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName="";heardText="";box.hidden=true;resultBox.style.display="none";updateDualState();statusEl.textContent=(T[sel.value]||T.en).ready;};}
-function reconcileName(){const typed=document.getElementById("typedName").value.trim();if(!recordedName||!typed)return;const typedHeb=normalizeHeb(typed),spokenHeb=normalizeHeb(recordedName);if(!typedHeb||!spokenHeb){statusEl.textContent=(T[sel.value]||T.en).cantWrite;return}const dist=levenshtein(typedHeb,spokenHeb),max=Math.max(typedHeb.length,spokenHeb.length,1),sim=1-dist/max;if(typedHeb===spokenHeb||sim>=.88){renderFinalHebrew(typedHeb);return}const cands=[typedHeb,spokenHeb].filter((v,i,a)=>v&&a.indexOf(v)===i);if(sim<.48){document.getElementById('choices').hidden=true;resultBox.style.display='none';statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;return}showChoices(cands)}
 
-
-let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null;
-async function startAudioCapture(){try{if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};mediaRecorder.onstop=()=>{if(recordedAudioUrl)URL.revokeObjectURL(recordedAudioUrl);const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioUrl=URL.createObjectURL(blob);showRecordingTools();updateDualState();requestAnimationFrame(updateDualState);mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null};mediaRecorder.start();return true}catch(e){mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;const t=T[sel.value]||T.en;statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?t.blocked:(e?.name==='NotFoundError'?t.noMic:t.browser);return false}}
-function stopAudioCapture(){if(mediaRecorder&&mediaRecorder.state!=='inactive')try{mediaRecorder.stop()}catch(e){}}
-function showRecordingTools(){let box=document.getElementById('recordingTools');if(!box){box=document.createElement('div');box.id='recordingTools';box.className='recording-tools';document.getElementById('recordCheck').after(box)}const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en;box.innerHTML='<button type="button" id="playRecording">🔊 '+escapeHtml(vm.listen)+'</button><button type="button" id="recordAgain">↻ '+escapeHtml(vm.again)+'</button>';document.getElementById('playRecording').onclick=()=>{if(recordedAudioUrl)new Audio(recordedAudioUrl).play()};document.getElementById('recordAgain').onclick=()=>{recordedName='';heardText='';updateDualState();box.remove();statusEl.textContent=(T[sel.value]||T.en).ready}}
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const mic=document.getElementById("mic"), statusEl=document.getElementById("status"), resultBox=document.getElementById("resultBox");
-let recognition=null, speechStarted=false, stopRequested=false, heardText="";
+let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null;
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null,heardText="",recognitionCandidates=[];
 
-function showSpeechResult(spoken){
-  const code=sel.value||"en", t=T[code]||T.en;
-  spoken=cleanRecognizedName(spoken);
-  if(!spoken){
-    resultBox.style.display="none";
-    statusEl.textContent=t.noName;
-    return;
+const TAP_HINT={he:'לחץ על המיקרופון כדי להתחיל',en:'Tap the microphone to begin',ar:'اضغط على الميكروفون للبدء',bn:'শুরু করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风开始',nl:'Tik op de microfoon om te beginnen',fil:'I-tap ang mikropono para magsimula',fr:'Touchez le microphone pour commencer',de:'Tippe auf das Mikrofon, um zu beginnen',el:'Πατήστε το μικρόφωνο για να ξεκινήσετε',hi:'शुरू करने के लिए माइक्रोफ़ोन पर टैप करें',id:'Ketuk mikrofon untuk mulai',it:'Tocca il microfono per iniziare',ja:'マイクをタップして開始',ko:'시작하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk mula',fa:'برای شروع روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby rozpocząć',pt:'Toque no microfone para começar',ru:'Нажмите на микрофон, чтобы начать',es:'Toca el micrófono para comenzar',sw:'Gusa maikrofoni kuanza',th:'แตะไมโครโฟนเพื่อเริ่ม',tr:'Başlamak için mikrofona dokunun',uk:'Натисніть на мікрофон, щоб почати',ur:'شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để bắt đầu'};
+
+function setRingProgress(p){const v=Math.max(0,Math.min(1,p));mic.style.setProperty('--ring-pct',(v*100)+'%');}
+function setMicState(state){const code=sel.value||'en';if(state==='listening')mic.setAttribute('aria-label',(UX[code]||UX.en).record);else mic.setAttribute('aria-label',TAP_HINT[code]||TAP_HINT.en);}
+function clearStatus(){statusEl.classList.remove('error-message');statusEl.textContent='';}
+
+function ensureRecorderLayout(){
+  const first=document.querySelector('.dual-inputs .required-field:first-child');
+  const check=document.getElementById('recordCheck');
+  if(!first||!mic||!check)return;
+  let row=document.getElementById('recorderActionRow');
+  if(!row){
+    row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';
+    const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';tools.hidden=true;
+    const stack=document.createElement('div');stack.className='recorder-mic-stack';
+    stack.appendChild(mic);stack.appendChild(check);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);
   }
-  const hebrew=toHebrewName(spoken);
-  if(!hebrew){
-    resultBox.style.display="none";
-    statusEl.textContent=t.cantWrite;
-    return;
+}
+ensureRecorderLayout();
+
+function updateDualState(){
+  statusEl.classList.remove('error-message');
+  const u=UX[sel.value]||UX.en,typed=document.getElementById('typedName').value.trim(),hasRecording=!!recordedAudioUrl;
+  const rc=document.getElementById('recordCheck');rc.textContent='';
+  if(hasRecording){
+    const parts=String(u.recorded||'').split('✓');rc.append(document.createTextNode(parts[0].trimEnd()+' '));
+    const mark=document.createElement('span');mark.className='recording-ok-check';mark.textContent='✓';rc.appendChild(mark);setRingProgress(1);
   }
-  const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);
-  document.getElementById("hebrew").textContent=hebrew;
-  const letterRows=letters.map(ch=>
-    '<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> '+ '<a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">(' + escapeHtml(localizedLetterName(ch,code)) + ', ' + GEMATRIA[ch] + ')</a></div>'
-  ).join("");
-  document.getElementById("details").innerHTML=
-    '<div class="name-letter-heading"><strong>'+t.letters+':</strong></div>'+
-    '<div class="name-letter-list">'+letterRows+'</div>'+
-    '<div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>'+
-    '<div style="margin-top:8px;color:#768195">'+t.heard+': '+escapeHtml(spoken)+'</div>';
-  resultBox.style.display="block";
-  statusEl.textContent="";
+  document.getElementById('typeCheck').textContent=typed?u.typed:'';
+  const go=document.getElementById('discoverBtn');go.disabled=!(hasRecording&&typed);go.classList.toggle('ready',hasRecording&&!!typed);
 }
 
-function speechErrorMessage(err){
-  const t=T[sel.value]||T.en;
-  const e=err?.error||err?.name||"";
-  if(e==="not-allowed"||e==="service-not-allowed") return t.blocked;
-  if(e==="audio-capture") return t.noMic;
-  if(e==="network") return t.network;
-  if(e==="no-speech") return t.noName;
-  if(e==="aborted") return "";
-  return t.speechError+": "+e;
+function speakHebrew(text){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang='he-IL';x.rate=.78;speechSynthesis.speak(x)}
+function renderFinalHebrew(hebrew,source){const code=sel.value||"en",t=T[code]||T.en;const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);const hebEl=document.getElementById("hebrew");hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById("resultAudioBtn").onclick=()=>speakHebrew(hebrew);const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();}
+function showChoices(cands){const u=UX[sel.value]||UX.en,box=document.getElementById('choices');box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div><div class="choice-hint">'+escapeHtml(document.getElementById('typedName').value.trim())+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';heardText='';box.hidden=true;resultBox.style.display='none';updateDualState();clearStatus();};}
+function reconcileName(){
+  const typed=document.getElementById('typedName').value.trim();if(!recordedAudioUrl||!typed)return;
+  clearStatus();
+  const typedHeb=hebrewCandidate(typed),typedKey=compareKey(typed);
+  if(!typedHeb||!typedKey){statusEl.textContent=(T[sel.value]||T.en).cantWrite;return;}
+  /* A valid recording must never fail only because browser speech recognition returned no text. */
+  const rawOptions=[];
+  if(recordedName)rawOptions.push({text:recordedName,confidence:1});
+  if(heardText)rawOptions.push({text:heardText,confidence:.65});
+  recognitionCandidates.forEach(x=>{if(x&&x.text)rawOptions.push(x)});
+  const seen=new Set(),options=[];
+  rawOptions.forEach(x=>{const text=cleanRecognizedName(String(x.text||'').trim());if(!text)return;const key=compareKey(text);if(!key||seen.has(key))return;seen.add(key);const he=hebrewCandidate(text);if(he)options.push({text,he,key,confidence:Number.isFinite(x.confidence)?x.confidence:0});});
+  if(!options.length){renderFinalHebrew(typedHeb,'typed-fallback');return;}
+  options.forEach(x=>{const dist=levenshtein(typedKey,x.key),max=Math.max(typedKey.length,x.key.length,1);x.sim=1-dist/max;});
+  options.sort((a,b)=>b.sim-a.sim||b.confidence-a.confidence);
+  const best=options[0];
+  if(best.sim>=.84){renderFinalHebrew(typedHeb,'verified');return;}
+  const cands=[typedHeb,...options.filter(x=>x.sim>=.45).slice(0,2).map(x=>x.he)].filter((v,i,a)=>v&&a.indexOf(v)===i);
+  /* Only a high-confidence, clearly contradictory transcript blocks automatic use. */
+  if(best.sim<.42&&best.confidence>=.78){document.getElementById('choices').hidden=true;resultBox.style.display='none';statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;return;}
+  if(cands.length>1){showChoices(cands);return;}
+  renderFinalHebrew(typedHeb,'typed-fallback');
 }
 
-function setMicState(state){
-  const t=T[sel.value]||T.en;
-  if(state==="listening"){
-    mic.setAttribute("aria-label",t.micListening);
-  }else if(state==="processing"){
-    mic.setAttribute("aria-label",t.processing);
-  }else{
-    mic.setAttribute("aria-label",(typeof TAP_HINT!=="undefined"?(TAP_HINT[sel.value]||TAP_HINT.en):"Tap microphone to begin"));
+async function startAudioCapture(){
+  try{
+    if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
+    mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);
+    mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};
+    mediaRecorder.onstop=()=>{
+      if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
+      const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});
+      if(blob.size>0){recordedAudioUrl=URL.createObjectURL(blob);showRecordingTools();}
+      else{recordedAudioUrl=null;const box=document.getElementById('recordingTools');if(box){box.hidden=true;box.innerHTML='';}}
+      updateDualState();requestAnimationFrame(updateDualState);
+      mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;mediaRecorder=null;
+    };
+    mediaRecorder.start();return true;
+  }catch(e){
+    mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;
+    const x=T[sel.value]||T.en;statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);return false;
   }
+}
+function stopAudioCapture(){if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}}
+function showRecordingTools(){
+  ensureRecorderLayout();const box=document.getElementById('recordingTools'),vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en;box.hidden=false;
+  box.innerHTML='<button type="button" id="playRecording">🔊 '+escapeHtml(vm.listen)+'</button><button type="button" id="recordAgain">↻ '+escapeHtml(vm.again)+'</button>';
+  document.getElementById('playRecording').onclick=()=>{if(recordedAudioUrl)new Audio(recordedAudioUrl).play()};
+  document.getElementById('recordAgain').onclick=()=>{
+    if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}recordedAudioUrl=null;}
+    recordedName='';heardText='';recognitionCandidates=[];resultBox.style.display='none';document.getElementById('choices').hidden=true;box.hidden=true;box.innerHTML='';setRingProgress(0);updateDualState();clearStatus();
+  };
 }
 
 function createRecognition(){
-  if(!SpeechRecognition) return null;
-  const r=new SpeechRecognition();
-  r.lang=(navigator.language||navigator.userLanguage||"en-US");
-  r.continuous=true;
-  r.interimResults=true;
-  r.maxAlternatives=3;
-
-  r.onstart=()=>{
-    speechStarted=true;
-    const t=T[sel.value]||T.en;
-    mic.classList.add("listening");
-    setMicState("listening");
-    statusEl.textContent="";
-  };
-
-  r.onresult=(ev)=>{
-    let best="";
+  if(!SpeechRecognition)return null;const r=new SpeechRecognition();
+  /* UI language is intentionally not used as the speech language. Browser/device locale is the neutral hint. */
+  r.lang=(navigator.language||navigator.userLanguage||'en-US');r.continuous=true;r.interimResults=true;r.maxAlternatives=3;
+  r.onresult=ev=>{
+    let primary='';const fresh=[];
     for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const res=ev.results[i];
-      if(res&&res[0]&&res[0].transcript) best+=(best?" ":"")+res[0].transcript;
+      const res=ev.results[i];if(!res)continue;
+      if(res[0]&&res[0].transcript)primary+=(primary?' ':'')+res[0].transcript;
+      for(let j=0;j<Math.min(res.length,3);j++){const alt=res[j];if(alt&&alt.transcript)fresh.push({text:alt.transcript.trim(),confidence:Number.isFinite(alt.confidence)?alt.confidence:0});}
     }
-    if(best.trim()) heardText=best.trim();
+    if(primary.trim())heardText=primary.trim();
+    if(fresh.length){const merged=[...recognitionCandidates,...fresh],seen=new Set();recognitionCandidates=merged.filter(x=>{const k=String(x.text||'').toLowerCase().trim();if(!k||seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>b.confidence-a.confidence).slice(0,8);}
   };
-
-  r.onerror=(ev)=>{
-    const msg=speechErrorMessage(ev);
-    if(msg) statusEl.textContent=msg;
-  };
-
-  r.onend=()=>{
-    speechStarted=false;
-    mic.classList.remove("listening");
-    setMicState("ready");
-    const finalHeard=heardText.trim();
-    recognition=null;
-    if(finalHeard){ recordedName=cleanRecognizedName(finalHeard); updateDualState(); statusEl.textContent=(UX[sel.value]||UX.en).recorded; }
-    else if(!statusEl.textContent || /LISTENING|ESCUCHANDO|ÉCOUTE|HÖRT|OUVINDO|СЛУШАЮ|جار|شنیدن|聆听|聞いて|듣는|सुन/i.test(statusEl.textContent)){
-      statusEl.textContent=(T[sel.value]||T.en).ready;
-    }
-  };
+  r.onerror=()=>{/* A recognition error does not invalidate a successful MediaRecorder recording. */};
+  r.onend=()=>{recognition=null;const finalHeard=cleanRecognizedName(heardText.trim());if(finalHeard)recordedName=finalHeard;updateDualState();};
   return r;
 }
+function startSpeech(){if(recognition||!SpeechRecognition)return;heardText='';recognitionCandidates=[];recognition=createRecognition();try{recognition.start()}catch(_e){recognition=null;}}
+function stopSpeech(){if(!recognition){setMicState('ready');return;}const r=recognition;try{r.stop()}catch(_e){}setTimeout(()=>{if(recognition===r){try{r.abort()}catch(_e){}recognition=null;}},2000);setMicState('ready');}
 
-function startSpeech(){
-  if(recognition) return;
-  if(!SpeechRecognition){
-    statusEl.textContent=(T[sel.value]||T.en).browser;
-    return;
-  }
-  heardText="";
-  stopRequested=false;
-  resultBox.style.display="none";
-  recognition=createRecognition();
-  try{
-    recognition.start();
-  }catch(err){
-    recognition=null;
-    mic.classList.remove("listening");
-    setMicState("ready");
-    statusEl.textContent=(T[sel.value]||T.en).speechError+": "+(err?.message||String(err));
-  }
+/* Recording starts on pointer-down. End time is the later of 8 seconds from
+   actual capture start and pointer release. The ring is only a 3-second guide. */
+let v9Recording=false,v9Starting=false,v9PointerHeld=false,v9StartedAt=0,v9MinTimer=null,v9RingRaf=null,v9PointerId=null;
+function stopRingAnimation(){if(v9RingRaf){cancelAnimationFrame(v9RingRaf);v9RingRaf=null;}}
+function animateRing(){stopRingAnimation();const tick=()=>{if(!v9Recording)return;const p=Math.min(1,(performance.now()-v9StartedAt)/3000);setRingProgress(p);if(p<1)v9RingRaf=requestAnimationFrame(tick);else v9RingRaf=null;};v9RingRaf=requestAnimationFrame(tick);}
+function finishV9Recording(){if(!v9Recording)return;v9Recording=false;v9Starting=false;clearTimeout(v9MinTimer);v9MinTimer=null;stopRingAnimation();setRingProgress(1);mic.classList.remove('listening');setMicState('ready');stopAudioCapture();stopSpeech();}
+function maybeFinishV9(){if(!v9Recording)return;const elapsed=performance.now()-v9StartedAt;if(elapsed>=8000&&!v9PointerHeld)finishV9Recording();}
+async function beginV9Recording(e){
+  if(v9Recording||v9Starting)return;v9Starting=true;v9PointerHeld=true;v9PointerId=e?.pointerId??null;
+  if(v9PointerId!==null){try{mic.setPointerCapture(v9PointerId)}catch(_e){}}
+  const tools=document.getElementById('recordingTools');if(tools){tools.hidden=true;tools.innerHTML='';}
+  heardText='';recordedName='';recognitionCandidates=[];if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}recordedAudioUrl=null;}
+  updateDualState();resultBox.style.display='none';document.getElementById('choices').hidden=true;clearStatus();setRingProgress(0);
+  const audioOk=await startAudioCapture();
+  if(!audioOk){v9Starting=false;v9PointerHeld=false;try{recognition?.abort()}catch(_e){}recognition=null;setRingProgress(0);return;}
+  v9Starting=false;v9Recording=true;v9StartedAt=performance.now();mic.classList.add('listening');setMicState('listening');startSpeech();animateRing();v9MinTimer=setTimeout(maybeFinishV9,8000);
 }
-
-function stopSpeech(){
-  stopRequested=true;
-  if(recognition){
-    setMicState("processing");
-    statusEl.textContent=(T[sel.value]||T.en).processing;
-    try{recognition.stop()}catch(_e){}
-  }else{
-    setMicState("ready");
-  }
-}
-
-/* Version 6: single-tap mobile recorder; 3-second circular guide, speech may continue */
-let v6Recording=false,v6Timer=null,v6RecognitionTimeout=null,v6AudioCtx=null,v6Analyser=null,v6Source=null;
-const TAP_HINT={he:'הקש על המיקרופון להתחלה',en:'Tap the microphone to begin',ar:'اضغط على الميكروفون للبدء',bn:'শুরু করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风开始',nl:'Tik op de microfoon om te beginnen',fil:'I-tap ang mikropono para magsimula',fr:'Touchez le microphone pour commencer',de:'Tippe auf das Mikrofon, um zu beginnen',el:'Πατήστε το μικρόφωνο για να ξεκινήσετε',hi:'शुरू करने के लिए माइक्रोफ़ोन पर टैप करें',id:'Ketuk mikrofon untuk mulai',it:'Tocca il microfono per iniziare',ja:'マイクをタップして開始',ko:'시작하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk mula',fa:'برای شروع روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby rozpocząć',pt:'Toque no microfone para começar',ru:'Нажмите на микрофон, чтобы начать',es:'Toca el micrófono para comenzar',sw:'Gusa maikrofoni kuanza',th:'แตะไมโครโฟนเพื่อเริ่ม',tr:'Başlamak için mikrofona dokunun',uk:'Натисніть на мікрофон, щоб почати',ur:'شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để bắt đầu'};
-function setRingProgress(p){mic.style.setProperty('--ring',Math.max(0,Math.min(1,p)));}
-function cleanupV6Audio(){try{v6Source&&v6Source.disconnect()}catch(e){};try{v6AudioCtx&&v6AudioCtx.close()}catch(e){};v6Source=v6Analyser=v6AudioCtx=null;}
-function resetRecorderUi(){v6Recording=false;clearInterval(v6Timer);clearTimeout(v6RecognitionTimeout);cleanupV6Audio();mic.classList.remove('listening');setMicState('ready');}
-function finishV6Recording(){
-  if(!v6Recording)return;v6Recording=false;clearInterval(v6Timer);cleanupV6Audio();setRingProgress(1);stopAudioCapture();stopSpeech();
-  v6RecognitionTimeout=setTimeout(()=>{if(recognition){try{recognition.abort()}catch(e){} recognition=null;}mic.classList.remove('listening');setMicState('ready');updateDualState();},5000);
-}
-async function beginV6Recording(){
-  if(v6Recording)return;const tools=document.getElementById('recordingTools');if(tools)tools.remove();
-  heardText='';recordedName='';if(recordedAudioUrl){URL.revokeObjectURL(recordedAudioUrl);recordedAudioUrl=null;}updateDualState();resultBox.style.display='none';statusEl.textContent='';setRingProgress(0);
-  const audioOk=await startAudioCapture();if(!audioOk){resetRecorderUi();return;}
-  v6Recording=true;mic.classList.add('listening');startSpeech();
-  const started=performance.now();let lastSound=started,soundSeen=false;
-  try{v6AudioCtx=new (window.AudioContext||window.webkitAudioContext)();v6Analyser=v6AudioCtx.createAnalyser();v6Analyser.fftSize=512;v6Source=v6AudioCtx.createMediaStreamSource(mediaStream);v6Source.connect(v6Analyser);}catch(e){}
-  const buf=new Uint8Array(512);
-  v6Timer=setInterval(()=>{
-    const now=performance.now(),elapsed=now-started;setRingProgress(Math.min(1,elapsed/3000));
-    if(v6Analyser){v6Analyser.getByteTimeDomainData(buf);let sum=0;for(const x of buf){const y=(x-128)/128;sum+=y*y}const rms=Math.sqrt(sum/buf.length);if(rms>.025){lastSound=now;soundSeen=true;}}
-    if(elapsed>=3000 && soundSeen && now-lastSound>=1200)finishV6Recording();
-    else if(elapsed>=4500 && !soundSeen)finishV6Recording();
-    else if(elapsed>=10000)finishV6Recording();
-  },70);
-}
-mic.addEventListener('click',e=>{e.preventDefault();beginV6Recording();});
-mic.addEventListener('contextmenu',e=>e.preventDefault());
+function releaseV9Recording(e){if(v9PointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==v9PointerId)return;v9PointerHeld=false;maybeFinishV9();}
+mic.addEventListener('pointerdown',e=>{e.preventDefault();beginV9Recording(e)});
+mic.addEventListener('pointerup',e=>{e.preventDefault();releaseV9Recording(e)});
+mic.addEventListener('pointercancel',releaseV9Recording);mic.addEventListener('lostpointercapture',releaseV9Recording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
 
 again.onclick=()=>{
   resultBox.style.display="none";
   heardText="";
-  statusEl.textContent=(T[sel.value]||T.en).ready;
+  statusEl.textContent=TAP_HINT[sel.value]||TAP_HINT.en;
   setMicState("ready");
 };
 
 
-document.getElementById("typedName").addEventListener("input",updateDualState);
+document.getElementById("typedName").addEventListener("input",()=>{clearStatus();updateDualState();});
 document.getElementById("discoverBtn").addEventListener("click",reconcileName);
 render(detectLang());
 
@@ -1588,3 +1558,30 @@ document.addEventListener('DOMContentLoaded',function(){
 </style>
 
 <style id="v2-result-audio">.hebrew{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important}.result-audio-btn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;border:1px solid var(--gold)!important;background:var(--card2)!important;color:var(--gold2)!important}</style>
+
+<style id="release9-voice-fixes">
+/* Release 9 recorder: green perimeter is the only timer. It starts at 12 o'clock and fills clockwise in 3 seconds. */
+#mic{--ring-pct:0%;position:relative!important;isolation:isolate!important;width:104px!important;height:104px!important;border:0!important;border-radius:50%!important;background:transparent!important;overflow:visible!important;padding:0!important;display:grid!important;place-items:center!important;margin:0!important;touch-action:none!important}
+#mic::before{content:""!important;position:absolute!important;inset:0!important;border-radius:50%!important;background:conic-gradient(from 0deg,#35d06f 0 var(--ring-pct),rgba(53,208,111,.18) var(--ring-pct) 100%)!important;z-index:0!important}
+#mic::after{content:""!important;position:absolute!important;inset:5px!important;border-radius:50%!important;background:#0b1219!important;z-index:1!important}
+#mic svg{position:relative!important;z-index:2!important;width:46px!important;height:46px!important}
+#mic.listening{box-shadow:0 0 0 7px rgba(53,208,111,.12),0 0 30px rgba(53,208,111,.24)!important}
+.recording-ok-check{color:#35d06f!important;font-weight:900!important}
+/* The secondary recording controls are physically LEFT of the microphone; Step 2 follows directly below Step 1. */
+.dual-inputs .required-field:first-child{display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;padding:14px 18px 8px!important}
+#recordLabel{grid-row:1!important;margin:0 0 4px!important}
+#hold{grid-row:2!important;display:block!important;margin:0 0 7px!important;min-height:21px!important;color:var(--muted)!important;text-align:center!important}
+#recorderActionRow{grid-row:3!important;width:min(100%,470px)!important;min-height:116px!important;display:grid!important;grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr)!important;column-gap:12px!important;align-items:center!important;direction:ltr!important}
+.recorder-mic-stack{grid-column:2!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important}
+#recordingTools{grid-column:1!important;justify-self:end!important;align-self:center!important;width:min(132px,100%)!important;display:flex!important;flex-direction:column!important;gap:7px!important;margin:0!important;position:static!important;transform:none!important}
+#recordingTools[hidden]{display:none!important}
+#recordingTools button{min-height:34px!important;padding:6px 8px!important;border-radius:10px!important;border:1px solid #48535f!important;background:#111a22!important;color:var(--text)!important;box-shadow:none!important;font-size:12.5px!important;font-weight:700!important;white-space:normal!important;line-height:1.15!important}
+#recordingTools button:active{transform:scale(.98)!important}
+#recordCheck{margin:5px 0 0!important;min-height:22px!important;text-align:center!important;white-space:nowrap!important;overflow:visible!important}
+.dual-inputs .required-field+.required-field{padding-top:8px!important;padding-bottom:14px!important}
+#status{margin:6px auto 0!important;min-height:0!important}
+.discover-btn:not(:disabled){opacity:1!important;filter:none!important;background:linear-gradient(180deg,#f2d36b,#d4ae49)!important;color:#111!important;border-color:#e6c75f!important;cursor:pointer!important}
+.discover-btn:disabled{opacity:.38!important;cursor:not-allowed!important}
+#foot{display:none!important}
+@media(max-width:560px){#recorderActionRow{width:100%!important;grid-template-columns:minmax(0,1fr) 94px minmax(0,1fr)!important;column-gap:8px!important;min-height:108px!important}#mic{width:94px!important;height:94px!important}#recordingTools{width:min(108px,100%)!important}#recordingTools button{font-size:11.5px!important;padding:5px 6px!important}}
+</style>

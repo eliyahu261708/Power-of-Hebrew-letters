@@ -902,8 +902,8 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
 
   <div class="page-nav"><a id="navAlpha" class="active" href="index.html">Hebrew Alphabet</a><a id="navMeaning" href="LetterMeaning.html">Meaning of the Letters</a><a id="navName" href="VoiceFun.html">Discover Your Name</a></div>
 <div class="card">
-    <table>
-      <colgroup><col><col><col><col></colgroup>
+    <table class="alphabet-table-fixed">
+      <colgroup><col><col><col><col><col></colgroup>
       <thead>
         <tr>
           <th id="hLetter">Hebrew letter</th><th id="handwritingHeader"></th>
@@ -1141,9 +1141,10 @@ function render(code){
   const p=pron[code]||latinPron;
   letters.forEach(([letter,name,gem,key])=>{
     const tr=document.createElement("tr");
+    const targetLetter=letter.trim().charAt(0);
     tr.innerHTML=`
-      <td class="hebrew-letter" dir="rtl"><a class="letter-link" href="LetterMeaning.html#letter-${letter}">${letter}</a></td><td class="hebrew-handwriting"><a class="letter-link" href="LetterMeaning.html#letter-${letter}">${letter}</a></td>
-      <td class="hebrew-name" dir="rtl"><a class="letter-link" href="LetterMeaning.html#letter-${letter}">${name}</a></td>
+      <td class="hebrew-letter" dir="rtl"><a class="letter-link" href="LetterMeaning.html#letter-${targetLetter}">${letter}</a></td><td class="hebrew-handwriting"><a class="letter-link" href="LetterMeaning.html#letter-${targetLetter}">${letter}</a></td>
+      <td class="hebrew-name" dir="rtl"><a class="letter-link" href="LetterMeaning.html#letter-${targetLetter}">${name}</a></td>
       <td class="gem">${gem}</td>
       <td class="pron">${p[key]||latinPron[key]}</td>`;
     tbody.appendChild(tr);
@@ -1455,4 +1456,18 @@ document.addEventListener('DOMContentLoaded',function(){
 .top .controls #printBtn{grid-column:2!important;justify-self:end!important}
 .select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important}.globe{display:none!important}
 @media(max-width:760px){.top{grid-template-columns:1fr!important}.top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}.top .controls{grid-column:1!important;grid-row:2!important;grid-template-columns:minmax(0,280px) minmax(0,1fr)!important;width:100%!important}.top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;width:100%!important;min-width:0!important;max-width:280px!important}.top .controls #printBtn{grid-column:2!important}}
+</style>
+
+<style id="release9-index-fixes">
+/* Keep the physical table order identical to Hebrew in every selected UI language. */
+.card{direction:rtl!important}
+.alphabet-table-fixed{direction:rtl!important;table-layout:fixed!important;width:100%!important}
+.alphabet-table-fixed thead,.alphabet-table-fixed tbody,.alphabet-table-fixed tr{direction:rtl!important}
+.alphabet-table-fixed th,.alphabet-table-fixed td{text-align:center!important}
+.alphabet-table-fixed .hebrew-letter,.alphabet-table-fixed .hebrew-handwriting,.alphabet-table-fixed .hebrew-name{direction:rtl!important}
+.alphabet-table-fixed .gem,.alphabet-table-fixed .pron{direction:ltr!important;unicode-bidi:plaintext!important}
+/* Clear but restrained link affordance for clickable letters. */
+.alphabet-table-fixed .hebrew-letter .letter-link,.alphabet-table-fixed .hebrew-handwriting .letter-link{display:inline-block!important;text-decoration-line:underline!important;text-decoration-color:rgba(216,182,83,.95)!important;text-decoration-thickness:1px!important;text-underline-offset:4px!important;cursor:pointer!important}
+.alphabet-table-fixed .hebrew-letter .letter-link:hover,.alphabet-table-fixed .hebrew-handwriting .letter-link:hover{color:var(--gold2)!important;text-decoration-thickness:2px!important}
+.alphabet-table-fixed .hebrew-letter .letter-link:active,.alphabet-table-fixed .hebrew-handwriting .letter-link:active{transform:scale(.96)!important}
 </style>
