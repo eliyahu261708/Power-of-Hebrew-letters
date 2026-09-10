@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Discover Your Name in Hebrew</title>
+<title>ThePowerOfHebrew — My Name in Hebrew</title>
 <style>
 
   :root{
@@ -974,6 +974,24 @@ window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
 gtag('js',new Date());gtag('config','G-DWPQ52DCDY',{'anonymize_ip':true});
 window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}catch(e){}};
 </script>
+
+<style id="v3-final-fixes">
+/* V3 fixed navigation: stable slots, two centered lines on mobile */
+.nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;align-items:stretch!important}
+.nav a{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.22!important;min-height:58px!important;padding:8px 10px!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
+@media(max-width:700px){.nav{gap:6px!important}.nav a{font-size:13px!important;min-height:64px!important;padding:7px 5px!important}}
+/* Remove every legacy globe trigger/container, including empty shell */
+.globe-btn,.language-globe,.lang-globe,#languageGlobe,#globeBtn,.globe-button{display:none!important;width:0!important;height:0!important;margin:0!important;padding:0!important;border:0!important}
+/* Recording + typing are one visual process */
+.dual-inputs{overflow:visible!important}
+#hold{display:none!important}
+#status{position:static!important;display:block!important;min-height:24px!important;margin:10px auto 0!important;line-height:1.35!important}
+#status.error-message{color:#ff5d5d!important;font-weight:700!important}
+.record-progress{display:none;width:min(420px,92%);margin:12px auto 4px;text-align:center}
+.record-progress-bar{height:12px;border-radius:999px;background:#202b35;border:1px solid #42515e;overflow:hidden}
+.record-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#8b6a24,#e7c86d);transition:width .08s linear}
+.record-progress-text{font-size:13px;margin-top:7px;color:#cbd3da;min-height:18px}
+</style>
 </head>
 <body>
 
@@ -1333,7 +1351,7 @@ function setMicState(state){
 function createRecognition(){
   if(!SpeechRecognition) return null;
   const r=new SpeechRecognition();
-  r.lang=(SPEECH_LOCALE[sel.value]||"en-US");
+  r.lang=(navigator.language||navigator.userLanguage||"en-US");
   r.continuous=true;
   r.interimResults=true;
   r.maxAlternatives=3;
@@ -1409,38 +1427,36 @@ function stopSpeech(){
   }
 }
 
-/* Proven mobile/desktop press-and-hold handlers */
-mic.addEventListener("touchstart",e=>{
-  lastTouchAt=Date.now();
-  e.preventDefault();
-  pressActive=true;
-  startAudioCapture();
-  startSpeech();
-},{passive:false});
-mic.addEventListener("touchend",e=>{
-  lastTouchAt=Date.now();
-  e.preventDefault();
-  stopAudioCapture();
-  stopSpeech();
-},{passive:false});
-mic.addEventListener("touchcancel",e=>{
-  lastTouchAt=Date.now();
-  e.preventDefault();
-  stopAudioCapture();
-  stopSpeech();
-},{passive:false});
-mic.addEventListener("mousedown",e=>{
-  if(Date.now()-lastTouchAt<800)return;
-  e.preventDefault();
-  pressActive=true;
-  startAudioCapture();
-  startSpeech();
-});
-window.addEventListener("mouseup",()=>{
-  if(Date.now()-lastTouchAt<800)return;
-  if(pressActive){stopAudioCapture();stopSpeech();}
-});
-mic.addEventListener("contextmenu",e=>e.preventDefault());
+/* Version 3: one-tap, four-second mobile-first recording */
+let v3Recording=false,v3Timer=null,v3RecognitionTimeout=null;
+function ensureProgress(){
+  let el=document.getElementById('recordProgress');
+  if(!el){
+    el=document.createElement('div');el.id='recordProgress';el.className='record-progress';
+    el.innerHTML='<div class="record-progress-bar"><div class="record-progress-fill"></div></div><div class="record-progress-text"></div>';
+    mic.parentElement.appendChild(el);
+  }
+  return el;
+}
+function setProgress(pct,text){const el=ensureProgress();el.style.display='block';el.querySelector('.record-progress-fill').style.width=pct+'%';el.querySelector('.record-progress-text').textContent=text||'';}
+function finishV3Recording(){
+  if(!v3Recording)return;v3Recording=false;clearInterval(v3Timer);stopAudioCapture();stopSpeech();
+  setProgress(100,(UX[sel.value]||UX.en).recorded+' ✓');
+  clearTimeout(v3RecognitionTimeout);v3RecognitionTimeout=setTimeout(()=>{
+    if(statusEl.textContent===(T[sel.value]||T.en).processing){setMicState('ready');statusEl.textContent=(T[sel.value]||T.en).noName;}
+  },2500);
+}
+async function beginV3Recording(){
+  if(v3Recording)return;
+  v3Recording=true;heardText='';recordedName='';updateDualState();resultBox.style.display='none';
+  const t=T[sel.value]||T.en;setMicState('listening');statusEl.textContent=t.listening;
+  await startAudioCapture();startSpeech();
+  const started=performance.now(),duration=4000;
+  setProgress(0,t.listening);
+  v3Timer=setInterval(()=>{const pct=Math.min(100,Math.round((performance.now()-started)/duration*100));setProgress(pct,t.listening);if(pct>=100)finishV3Recording();},80);
+}
+mic.addEventListener('click',e=>{e.preventDefault();beginV3Recording();});
+mic.addEventListener('contextmenu',e=>e.preventDefault());
 
 again.onclick=()=>{
   resultBox.style.display="none";
@@ -1507,6 +1523,15 @@ document.addEventListener('DOMContentLoaded',function(){
   q('#mic')?.addEventListener('pointerdown',()=>trackSiteEvent('name_record_started'));
   q('#discoverBtn')?.addEventListener('click',()=>trackSiteEvent('discover_name_clicked'));
 });
+</script>
+
+<script id="v3-nav-labels">
+(function(){
+ const labels={he:['טבלת אותיות<br>השפה העברית','משמעות אותיות<br>השפה העברית','השם שלי<br>בשפה העברית']};
+ function apply(){const lang=(document.getElementById('languageSelect')||{}).value;if(lang==='he'){['navAlpha','navMeaning','navName'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.innerHTML=labels.he[i]})}}
+ document.addEventListener('DOMContentLoaded',()=>{apply();document.getElementById('languageSelect')?.addEventListener('change',()=>setTimeout(apply,0));});
+ window.addEventListener('load',apply);
+})();
 </script>
 </body>
 </html>
