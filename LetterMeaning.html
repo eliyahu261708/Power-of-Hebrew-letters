@@ -879,6 +879,28 @@ window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}
 gtag('js',new Date());gtag('config','G-DWPQ52DCDY',{'anonymize_ip':true});
 window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}catch(e){}};
 </script>
+<style id="v5-letter-polish">
+/* Fixed physical order in every language: right speaker, Hebrew, selected-language translation left */
+.word-row{direction:ltr!important;grid-template-columns:minmax(0,1fr) minmax(92px,.58fr) 48px!important;gap:12px!important;min-height:58px!important}
+.word-row .translation{grid-column:1!important;grid-row:1!important;text-align:left!important;direction:auto!important;min-width:0!important;overflow-wrap:anywhere!important;line-height:1.2!important}
+.word-row .he-word{grid-column:2!important;grid-row:1!important;text-align:right!important;direction:rtl!important;white-space:nowrap!important}
+.word-row .play-btn{grid-column:3!important;grid-row:1!important;justify-self:end!important;margin:0!important}
+/* Four letter forms read as one compact unit */
+.letter-display-row{margin:1px 0!important;gap:8px!important;align-items:center!important}
+.final-row{margin-top:-2px!important;padding-top:0!important;border-top:0!important}
+.form-label{margin-top:1px!important;line-height:1.12!important;min-height:15px!important;max-width:210px!important;margin-inline:auto!important}
+.letter-big,.letter-hand{line-height:.88!important}
+.divider{font-size:58px!important;line-height:.9!important}
+@media(max-width:760px){
+ .word-row{grid-template-columns:minmax(0,1fr) minmax(78px,.62fr) 46px!important;gap:8px!important;padding:8px!important;min-height:58px!important}
+ .word-row .translation{font-size:clamp(13px,4vw,18px)!important;line-height:1.15!important}
+ .word-row .he-word{font-size:20px!important}
+ .letter-display-row{gap:3px!important;margin:0!important}
+ .letter-big,.letter-hand{font-size:78px!important}
+ .form-label{font-size:clamp(11px,3.4vw,13px)!important;line-height:1.08!important}
+ .divider{font-size:50px!important}
+}
+</style>
 </head>
 <body>
 

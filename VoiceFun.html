@@ -992,6 +992,15 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
 .record-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#8b6a24,#e7c86d);transition:width .08s linear}
 .record-progress-text{font-size:13px;margin-top:7px;color:#cbd3da;min-height:18px}
 </style>
+<style id="v5-voice-ui">
+.record-progress{display:none!important}.mic-action{display:none!important}
+.record-hint{margin:-4px 0 12px;color:#aeb5c0;font-size:15px;line-height:1.35;text-align:center;min-height:20px}
+.mic{position:relative!important;border:2px solid #8f7634!important;background:#111820!important;isolation:isolate;--record-progress:0%}
+.mic::before{content:"";position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,#e8c65d var(--record-progress),rgba(232,198,93,.16) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 5px),#000 calc(100% - 4px));pointer-events:none;opacity:.55;transform:rotate(0deg)}
+.mic.recording-ring::before,.mic.ring-complete::before{opacity:1}.mic.recording-ring{box-shadow:0 0 0 7px rgba(232,198,93,.05),0 0 22px rgba(232,198,93,.18)}
+.discover-btn.ready:not(:disabled){opacity:1!important;background:linear-gradient(180deg,#f3d774,#d5ad3f)!important;color:#151515!important;box-shadow:0 0 18px rgba(232,198,93,.22);cursor:pointer!important}
+@media(max-width:760px){.record-hint{font-size:14px;margin-bottom:10px}.dual-inputs{gap:0!important}}
+</style>
 </head>
 <body>
 
@@ -1024,8 +1033,8 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
   <section class="voice-card">
     <p id="sub" class="sub"></p>
     <div class="dual-inputs">
-      <div class="required-field"><div id="recordLabel" class="field-label"></div><button id="mic" class="mic" type="button" aria-label="Hold to speak">
-      <span id="micAction" class="mic-action">PRESS & HOLD</span>
+      <div class="required-field"><div id="recordLabel" class="field-label"></div><div id="recordHint" class="record-hint"></div><button id="mic" class="mic" type="button" aria-label="Hold to speak">
+      <span id="micAction" class="mic-action" aria-hidden="true"></span>
       <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/></svg>
     </button><div id="hold" class="hold"></div><div id="recordCheck" class="field-check"></div></div>
       <div class="required-field"><label id="typeLabel" class="field-label" for="typedName"></label><input id="typedName" class="name-input" type="text" autocomplete="name" spellcheck="false" inputmode="text" autocapitalize="words"><div id="typeCheck" class="field-check"></div></div>
@@ -1088,7 +1097,7 @@ function render(code){
   document.title="ThePowerOfHebrew — My Name in Hebrew"; document.getElementById("brandEyebrow").textContent="ThePowerOfHebrew"; pageTitle.textContent=t.title; sub.textContent=t.sub; hold.textContent=""; statusEl.textContent="";
   navAlpha.textContent=t.navAlpha; navName.textContent=t.navName; if(window.MEANING_NAV&&navMeaning)navMeaning.textContent=MEANING_NAV[code]||MEANING_NAV.he; if(window.YOUTUBE_LABELS&&youtubeChannelText)youtubeChannelText.textContent=YOUTUBE_LABELS[code]||YOUTUBE_LABELS.he; resultLabel.textContent=t.result;
   again.textContent=t.again; foot.textContent=t.foot; setMicState("ready");
-  const u=UX[code]||UX.en; sub.textContent=u.intro; document.getElementById("recordLabel").textContent=u.record; document.getElementById("typeLabel").textContent=u.type; document.getElementById("typedName").placeholder=u.ph; document.getElementById("discoverBtn").textContent=u.go; updateDualState();
+  const u=UX[code]||UX.en; sub.textContent=u.intro; document.getElementById("recordLabel").textContent=u.record; document.getElementById("recordHint").textContent=TAP_HINTS[code]||TAP_HINTS.en; document.getElementById("typeLabel").textContent=u.type; document.getElementById("typedName").placeholder=u.ph; document.getElementById("discoverBtn").textContent=u.go; updateDualState();
 }
 
 const latinPron = {
@@ -1246,6 +1255,7 @@ vi:{intro:"Để viết tên của bạn bằng tiếng Hebrew chính xác nhấ
 };
 const NAV_NAME_LABELS={"he": "השם שלי בשפה העברית", "en": "My name in Hebrew", "ar": "اسمي بالعبرية", "bn": "হিব্রুতে আমার নাম", "zh": "我的希伯来语名字", "nl": "Mijn naam in het Hebreeuws", "fil": "Ang pangalan ko sa Hebrew", "fr": "Mon nom en hébreu", "de": "Mein Name auf Hebräisch", "el": "Το όνομά μου στα Εβραϊκά", "hi": "हिब्रू में मेरा नाम", "id": "Nama saya dalam bahasa Ibrani", "it": "Il mio nome in ebraico", "ja": "ヘブライ語での私の名前", "ko": "히브리어로 내 이름", "ms": "Nama saya dalam bahasa Ibrani", "fa": "نام من به عبری", "pl": "Moje imię po hebrajsku", "pt": "Meu nome em hebraico", "ru": "Моё имя на иврите", "es": "Mi nombre en hebreo", "sw": "Jina langu kwa Kiebrania", "th": "ชื่อของฉันในภาษาฮีบรู", "tr": "İbranice adım", "uk": "Моє ім’я івритом", "ur": "میرا نام عبرانی میں", "vi": "Tên tôi bằng tiếng Hebrew"};Object.keys(NAV_NAME_LABELS).forEach(k=>{if(UX[k])UX[k].go=NAV_NAME_LABELS[k]});
 
+const TAP_HINTS={he:"לחץ על המיקרופון כדי להתחיל",en:"Tap the microphone to begin",ar:"اضغط على الميكروفون للبدء",bn:"শুরু করতে মাইক্রোফোনে ট্যাপ করুন",zh:"点击麦克风开始",nl:"Tik op de microfoon om te beginnen",fil:"I-tap ang mikropono para magsimula",fr:"Touchez le microphone pour commencer",de:"Tippe auf das Mikrofon, um zu beginnen",el:"Πατήστε το μικρόφωνο για να ξεκινήσετε",hi:"शुरू करने के लिए माइक्रोफ़ोन पर टैप करें",id:"Ketuk mikrofon untuk memulai",it:"Tocca il microfono per iniziare",ja:"マイクをタップして開始",ko:"시작하려면 마이크를 탭하세요",ms:"Ketik mikrofon untuk mula",fa:"برای شروع روی میکروفون بزنید",pl:"Dotknij mikrofonu, aby rozpocząć",pt:"Toque no microfone para começar",ru:"Нажмите на микрофон, чтобы начать",es:"Toca el micrófono para comenzar",sw:"Gusa maikrofoni ili kuanza",th:"แตะไมโครโฟนเพื่อเริ่ม",tr:"Başlamak için mikrofona dokunun",uk:"Торкніться мікрофона, щоб почати",ur:"شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں",vi:"Chạm vào micrô để bắt đầu"};
 const SPEECH_LOCALE={he:"he-IL",en:"en-US",ar:"ar-SA",bn:"bn-BD",zh:"zh-CN",nl:"nl-NL",fil:"fil-PH",fr:"fr-FR",de:"de-DE",el:"el-GR",hi:"hi-IN",id:"id-ID",it:"it-IT",ja:"ja-JP",ko:"ko-KR",ms:"ms-MY",fa:"fa-IR",pl:"pl-PL",pt:"pt-BR",ru:"ru-RU",es:"es-ES",sw:"sw-KE",th:"th-TH",tr:"tr-TR",uk:"uk-UA",ur:"ur-PK",vi:"vi-VN"};
 const V2_MESSAGES={
 he:{mismatch:"ההקלטה וההקלדה אינן תואמות. בדוק את השם או הקלט שוב.",listen:"שמע את ההקלטה",again:"הקלט שוב",hearName:"שמע את השם"},
@@ -1279,17 +1289,17 @@ vi:{mismatch:"Bản ghi âm và tên đã nhập không khớp. Hãy kiểm tra 
 let recordedName="";
 function normalizeHeb(s){return toHebrewName(s).replace(/[׳״\s]/g,"");}
 function levenshtein(a,b){a=[...a];b=[...b];const d=Array(b.length+1).fill(0).map((_,j)=>j);for(let i=1;i<=a.length;i++){let prev=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const old=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));prev=old}}return d[b.length]}
-function updateDualState(){document.getElementById('status')?.classList.remove('error-message');const u=UX[sel.value]||UX.en;const typed=document.getElementById("typedName").value.trim();document.getElementById("recordCheck").textContent=recordedName?u.recorded:"";document.getElementById("typeCheck").textContent=typed?u.typed:"";document.getElementById("discoverBtn").disabled=!(recordedName&&typed);}
+function updateDualState(){document.getElementById('status')?.classList.remove('error-message');const u=UX[sel.value]||UX.en;const typed=document.getElementById("typedName").value.trim();const hasRecording=!!recordedAudioUrl;document.getElementById("recordCheck").textContent=hasRecording?u.recorded:"";document.getElementById("typeCheck").textContent=typed?u.typed:"";document.getElementById("discoverBtn").disabled=!(hasRecording&&typed);document.getElementById("discoverBtn").classList.toggle('ready',hasRecording&&!!typed);}
 function speakHebrew(text){if(!('speechSynthesis'in window))return; speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang="he-IL";x.rate=.78;speechSynthesis.speak(x)}
 function renderFinalHebrew(hebrew,source){const code=sel.value||"en",t=T[code]||T.en;const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);const hebEl=document.getElementById("hebrew");hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById("resultAudioBtn").onclick=()=>speakHebrew(hebrew);const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display="block";document.getElementById("choices").hidden=true;statusEl.textContent="";}
 function showChoices(cands){const u=UX[sel.value]||UX.en,box=document.getElementById("choices");box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div><div class="choice-hint">'+escapeHtml(document.getElementById("typedName").value.trim())+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName="";heardText="";box.hidden=true;resultBox.style.display="none";updateDualState();statusEl.textContent=(T[sel.value]||T.en).ready;};}
-function reconcileName(){const typed=document.getElementById("typedName").value.trim();if(!recordedName||!typed)return;const typedHeb=normalizeHeb(typed),spokenHeb=normalizeHeb(recordedName);if(!typedHeb||!spokenHeb){statusEl.textContent=(T[sel.value]||T.en).cantWrite;return}const dist=levenshtein(typedHeb,spokenHeb),max=Math.max(typedHeb.length,spokenHeb.length,1),sim=1-dist/max;if(typedHeb===spokenHeb||sim>=.88){renderFinalHebrew(typedHeb);return}const cands=[typedHeb,spokenHeb].filter((v,i,a)=>v&&a.indexOf(v)===i);if(sim<.48){document.getElementById('choices').hidden=true;resultBox.style.display='none';statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;return}showChoices(cands)}
+function reconcileName(){const typed=document.getElementById("typedName").value.trim();if(!typed)return;if(!recordedName){statusEl.textContent=(T[sel.value]||T.en).noName;return;}const typedHeb=normalizeHeb(typed),spokenHeb=normalizeHeb(recordedName);if(!typedHeb||!spokenHeb){statusEl.textContent=(T[sel.value]||T.en).cantWrite;return}const dist=levenshtein(typedHeb,spokenHeb),max=Math.max(typedHeb.length,spokenHeb.length,1),sim=1-dist/max;if(typedHeb===spokenHeb||sim>=.88){renderFinalHebrew(typedHeb);return}const cands=[typedHeb,spokenHeb].filter((v,i,a)=>v&&a.indexOf(v)===i);if(sim<.48){document.getElementById('choices').hidden=true;resultBox.style.display='none';statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;return}showChoices(cands)}
 
 
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null;
-async function startAudioCapture(){try{if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};mediaRecorder.onstop=()=>{if(recordedAudioUrl)URL.revokeObjectURL(recordedAudioUrl);const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioUrl=URL.createObjectURL(blob);showRecordingTools();mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null};mediaRecorder.start();return true}catch(e){mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;const t=T[sel.value]||T.en;statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?t.blocked:(e?.name==='NotFoundError'?t.noMic:t.browser);return false}}
+async function startAudioCapture(){try{if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};mediaRecorder.onstop=()=>{if(recordedAudioUrl)URL.revokeObjectURL(recordedAudioUrl);const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioUrl=URL.createObjectURL(blob);showRecordingTools();updateDualState();mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null};mediaRecorder.start();return true}catch(e){mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;const t=T[sel.value]||T.en;statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?t.blocked:(e?.name==='NotFoundError'?t.noMic:t.browser);return false}}
 function stopAudioCapture(){if(mediaRecorder&&mediaRecorder.state!=='inactive')try{mediaRecorder.stop()}catch(e){}}
-function showRecordingTools(){let box=document.getElementById('recordingTools');if(!box){box=document.createElement('div');box.id='recordingTools';box.className='recording-tools';document.getElementById('recordCheck').after(box)}const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en;box.innerHTML='<button type="button" id="playRecording">🔊 '+escapeHtml(vm.listen)+'</button><button type="button" id="recordAgain">↻ '+escapeHtml(vm.again)+'</button>';document.getElementById('playRecording').onclick=()=>{if(recordedAudioUrl)new Audio(recordedAudioUrl).play()};document.getElementById('recordAgain').onclick=()=>{recordedName='';heardText='';updateDualState();box.remove();statusEl.textContent=(T[sel.value]||T.en).ready}}
+function showRecordingTools(){let box=document.getElementById('recordingTools');if(!box){box=document.createElement('div');box.id='recordingTools';box.className='recording-tools';document.getElementById('recordCheck').after(box)}const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en;box.innerHTML='<button type="button" id="playRecording">🔊 '+escapeHtml(vm.listen)+'</button><button type="button" id="recordAgain">↻ '+escapeHtml(vm.again)+'</button>';document.getElementById('playRecording').onclick=()=>{if(recordedAudioUrl)new Audio(recordedAudioUrl).play()};document.getElementById('recordAgain').onclick=()=>{recordedName='';heardText='';if(recordedAudioUrl){URL.revokeObjectURL(recordedAudioUrl);recordedAudioUrl=null;}updateDualState();box.remove();statusEl.textContent=TAP_HINTS[sel.value]||TAP_HINTS.en;setRingProgress(0)}}
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const mic=document.getElementById("mic"), statusEl=document.getElementById("status"), resultBox=document.getElementById("resultBox");
 let recognition=null, speechStarted=false, stopRequested=false, heardText="";
@@ -1423,46 +1433,62 @@ function stopSpeech(){
   }
 }
 
-/* Version 4: clean single-tap, four-second mobile-first recording */
-let v4Recording=false,v4Timer=null,v4RecognitionTimeout=null;
-function ensureProgress(){
-  let el=document.getElementById('recordProgress');
-  if(!el){
-    el=document.createElement('div');el.id='recordProgress';el.className='record-progress';
-    el.innerHTML='<div class="record-progress-bar"><div class="record-progress-fill"></div></div><div class="record-progress-text"></div>';
-    mic.parentElement.appendChild(el);
-  }
-  return el;
+/* Version 5: single tap, circular 3-second guide, silence-aware recording */
+let v5Recording=false,v5RingTimer=null,v5MaxTimer=null,v5RecognitionTimeout=null;
+let v5AudioCtx=null,v5Analyser=null,v5SilenceTimer=null,v5SpeechSeen=false;
+function setRingProgress(pct){
+  const p=Math.max(0,Math.min(100,pct));
+  mic.style.setProperty('--record-progress',p+'%');
+  mic.classList.toggle('recording-ring',v5Recording);
+  mic.classList.toggle('ring-complete',p>=100);
 }
-function setProgress(pct,text){const el=ensureProgress();el.style.display='block';el.querySelector('.record-progress-fill').style.width=pct+'%';el.querySelector('.record-progress-text').textContent=text||'';}
-function resetRecorderUi(){v4Recording=false;clearInterval(v4Timer);clearTimeout(v4RecognitionTimeout);mic.classList.remove('listening');setMicState('ready');}
-function finishV4Recording(){
-  if(!v4Recording)return;
-  v4Recording=false;clearInterval(v4Timer);stopAudioCapture();stopSpeech();
-  const u=UX[sel.value]||UX.en;setProgress(100,u.recorded);
-  v4RecognitionTimeout=setTimeout(()=>{
+function cleanupSilenceDetector(){
+  clearInterval(v5SilenceTimer);v5SilenceTimer=null;
+  if(v5AudioCtx){try{v5AudioCtx.close()}catch(_e){}}v5AudioCtx=null;v5Analyser=null;
+}
+function startSilenceDetector(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC||!mediaStream)return;
+    v5AudioCtx=new AC();v5Analyser=v5AudioCtx.createAnalyser();v5Analyser.fftSize=1024;
+    const src=v5AudioCtx.createMediaStreamSource(mediaStream);src.connect(v5Analyser);
+    const data=new Uint8Array(v5Analyser.fftSize);let silentSince=0;const begun=performance.now();
+    v5SilenceTimer=setInterval(()=>{
+      if(!v5Recording||!v5Analyser)return;
+      v5Analyser.getByteTimeDomainData(data);let sum=0;
+      for(const x of data){const v=(x-128)/128;sum+=v*v}const rms=Math.sqrt(sum/data.length);
+      const now=performance.now();
+      if(rms>0.025){v5SpeechSeen=true;silentSince=0;}
+      else if(v5SpeechSeen && now-begun>900){if(!silentSince)silentSince=now;if(now-silentSince>=1250)finishV5Recording();}
+      else silentSince=0;
+    },100);
+  }catch(_e){}
+}
+function resetRecorderUi(){v5Recording=false;clearInterval(v5RingTimer);clearTimeout(v5MaxTimer);clearTimeout(v5RecognitionTimeout);cleanupSilenceDetector();mic.classList.remove('listening','recording-ring');setMicState('ready');}
+function finishV5Recording(){
+  if(!v5Recording)return;
+  v5Recording=false;clearInterval(v5RingTimer);clearTimeout(v5MaxTimer);cleanupSilenceDetector();
+  setRingProgress(100);mic.classList.remove('listening','recording-ring');stopAudioCapture();stopSpeech();
+  const u=UX[sel.value]||UX.en;statusEl.textContent=u.recorded;
+  v5RecognitionTimeout=setTimeout(()=>{
     if(recognition){try{recognition.abort()}catch(_e){} recognition=null;}
-    mic.classList.remove('listening');setMicState('ready');
-    if(!recordedName) statusEl.textContent=(T[sel.value]||T.en).noName;
+    setMicState('ready');updateDualState();
   },5000);
 }
-async function beginV4Recording(){
-  if(v4Recording)return;
+async function beginV5Recording(){
+  if(v5Recording)return;
   const tools=document.getElementById('recordingTools');if(tools)tools.remove();
-  heardText='';recordedName='';updateDualState();resultBox.style.display='none';
-  statusEl.textContent='';setProgress(0,'0%');
+  if(recordedAudioUrl){URL.revokeObjectURL(recordedAudioUrl);recordedAudioUrl=null;}
+  heardText='';recordedName='';updateDualState();resultBox.style.display='none';statusEl.textContent='';
+  setRingProgress(0);
   const audioOk=await startAudioCapture();
   if(!audioOk){resetRecorderUi();return;}
-  v4Recording=true;mic.classList.add('listening');
-  startSpeech();
-  const started=performance.now(),duration=4000;
-  v4Timer=setInterval(()=>{
-    const pct=Math.min(100,Math.round((performance.now()-started)/duration*100));
-    setProgress(pct,pct+'%');
-    if(pct>=100)finishV4Recording();
-  },80);
+  v5Recording=true;v5SpeechSeen=false;mic.classList.add('listening','recording-ring');setMicState('listening');
+  startSpeech();startSilenceDetector();
+  const started=performance.now(),guide=3000;
+  v5RingTimer=setInterval(()=>{const pct=Math.min(100,(performance.now()-started)/guide*100);setRingProgress(pct);if(pct>=100)clearInterval(v5RingTimer);},40);
+  v5MaxTimer=setTimeout(finishV5Recording,10000);
 }
-mic.addEventListener('click',e=>{e.preventDefault();beginV4Recording();});
+mic.addEventListener('click',e=>{e.preventDefault();beginV5Recording();});
 mic.addEventListener('contextmenu',e=>e.preventDefault());
 
 again.onclick=()=>{
