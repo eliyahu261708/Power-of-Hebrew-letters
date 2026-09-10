@@ -1446,3 +1446,13 @@ document.addEventListener('DOMContentLoaded',function(){
 .globe{display:none!important}.select-wrap{gap:0!important}
 @media(max-width:760px){.page-nav{gap:6px!important}.page-nav a{font-size:12px!important;padding:7px 4px!important;min-height:58px!important}}
 </style>
+
+<style id="v2-shared-top-stability">
+.top{display:grid!important;grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr)!important;align-items:start!important;gap:16px!important;direction:ltr!important}
+.top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}
+.top .controls{grid-column:2 / 4!important;grid-row:1!important;display:grid!important;grid-template-columns:280px minmax(0,1fr)!important;align-items:start!important;gap:12px!important;direction:ltr!important}
+.top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;justify-self:stretch!important;width:280px!important;min-width:280px!important}
+.top .controls #printBtn{grid-column:2!important;justify-self:end!important}
+.select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important}.globe{display:none!important}
+@media(max-width:760px){.top{grid-template-columns:1fr!important}.top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}.top .controls{grid-column:1!important;grid-row:2!important;grid-template-columns:minmax(0,280px) minmax(0,1fr)!important;width:100%!important}.top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;width:100%!important;min-width:0!important;max-width:280px!important}.top .controls #printBtn{grid-column:2!important}}
+</style>
