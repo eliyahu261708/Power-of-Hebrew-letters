@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- Official release: Version 16 — Recording-authoritative Hebrew recognition + private alternatives engine -->
+<!-- Official release: Version 17 — Cross-checked recording-first recognition + controlled pronunciation playback -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ThePowerOfHebrew — My Name in Hebrew — v16</title>
@@ -1206,27 +1206,10 @@ function cleanRecognizedName(raw){
   for(const p of prefixes){if(low.startsWith(p.toLowerCase())){x=x.slice(p.length).trim();break;}}
   return x;
 }
-function toHebrewName(raw){
-  let x=String(raw||"").trim();
-  if(/[א-ת]/.test(x)) return x.replace(/[^א-ת׳״ ]/g,"").trim();
-  x=x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  x=x.replace(/[.,!?;:"“”()]/g,"").replace(/\s+/g," ");
-  const rules=[
-    [/sch/g,"ש"],[/sh/g,"ש"],[/tch/g,"צ׳"],[/ch/g,"צ׳"],[/zh/g,"ז׳"],[/th/g,"ת"],[/ph/g,"פ"],[/ck/g,"ק"],
-    [/qu/g,"קוו"],[/ng/g,"נג"],[/kh/g,"ח"],[/gh/g,"ג"],[/j/g,"ג׳"],[/w/g,"ו"],
-    [/a/g,"א"],[/e/g,"ה"],[/i/g,"י"],[/o/g,"ו"],[/u/g,"ו"],[/y/g,"י"],
-    [/b/g,"ב"],[/c/g,"ק"],[/d/g,"ד"],[/f/g,"פ"],[/g/g,"ג"],[/h/g,"ה"],[/k/g,"ק"],
-    [/l/g,"ל"],[/m/g,"מ"],[/n/g,"נ"],[/p/g,"פ"],[/q/g,"ק"],[/r/g,"ר"],[/s/g,"ס"],
-    [/t/g,"ט"],[/v/g,"ו"],[/x/g,"קס"],[/z/g,"ז"]
-  ];
-  for(const [a,b] of rules)x=x.replace(a,b);
-  return x.replace(/[^א-ת׳״ ]/g,"").trim();
-}
-
 
 const UX={
-he:{intro:"נא להקליט את שמך ולאחר מכן להקליד אותו. הכתיב העברי והאפשרויות נקבעים לפי ההקלטה בלבד; ההקלדה משמשת כפרט עזר ואינה משנה את תוצאות ההקלטה.",record:"1. נא להקליט את שמך",type:"2. נא להקליד את שמך",ph:"נא להקליד את שמך",go:"השם שלי בשפה העברית",recorded:"ההקלטה התקבלה ✓",typed:"השם הוקלד ✓",choose:"נמצאה יותר מאפשרות אחת. ניתן להאזין לכל אפשרות ולבחור בזו שנשמעת הקרובה ביותר.",retry:"אף אפשרות אינה מתאימה — הקלטה מחדש"},
-en:{intro:"Record your name and then type it. The Hebrew spelling options are generated from the recording only; the typed name is reference information and cannot change the recording results.",record:"1. Record your name",type:"2. Type your name",ph:"Type your name",go:"Discover your name in the Hebrew language",recorded:"Recording received ✓",typed:"Name entered ✓",choose:"We found more than one possible spelling. Listen to each option and choose the one that sounds most like your name.",retry:"None sound right — record again"},
+he:{intro:"באמצעות עמוד זה תוכלו לגלות כיצד נכתב שמכם באותיות השפה העברית. כדי לקבל את התוצאה המדויקת ביותר, יש להקליט את שמכם באופן ברור ומדויק, ולאחר מכן להקליד אותו. האלגוריתם הייחודי של המערכת יצליב בין הקלט המוקלט לבין הקלט המוקלד, ויציג את החלופות המתאימות ביותר לשמכם כפי שהוא עשוי להיכתב באותיות השפה העברית.",record:"1. נא להקליט את שמך",type:"2. נא להקליד את שמך",ph:"נא להקליד את שמך",go:"השם שלי בשפה העברית",recorded:"ההקלטה התקבלה ✓",typed:"השם הוקלד ✓",choose:"נמצאה יותר מאפשרות אחת. ניתן להאזין לכל אפשרות ולבחור בזו שנשמעת הקרובה ביותר.",retry:"אף אפשרות אינה מתאימה — הקלטה מחדש"},
+en:{intro:"Use this page to discover how your name can be written with Hebrew letters. For the most accurate result, record your name clearly and then type it. The system cross-checks the recording with the typed input, while the recording remains the primary source for the Hebrew spelling options.",record:"1. Record your name",type:"2. Type your name",ph:"Type your name",go:"Discover your name in the Hebrew language",recorded:"Recording received ✓",typed:"Name entered ✓",choose:"We found more than one possible spelling. Listen to each option and choose the one that sounds most like your name.",retry:"None sound right — record again"},
 ar:{intro:"لزيادة دقة كتابة اسمك بالعبرية، أدخل الاسم الذي يناديك به الناس يوميًا مرتين: أولًا بالتسجيل ثم بالكتابة. سيقارن النظام بين المدخلين ويكتب أقرب صيغة دقيقة لاسمك بالعبرية.",record:"1. سجّل اسمك",type:"2. اكتب اسمك",ph:"اكتب اسمك",go:"اكتشف اسمك باللغة العبرية",recorded:"تم استلام التسجيل ✓",typed:"تم إدخال الاسم ✓",choose:"وجدنا أكثر من احتمال. استمع إلى كل خيار واختر الأقرب إلى نطق اسمك.",retry:"لا يوجد خيار مناسب — سجّل مرة أخرى"},
 bn:{intro:"আপনার নাম হিব্রুতে যতটা সম্ভব নির্ভুলভাবে লেখার জন্য, দৈনন্দিন জীবনে মানুষ যে নামে আপনাকে ডাকে সেটি দুবার দিন—প্রথমে রেকর্ড করে, তারপর টাইপ করে। সিস্টেম দুটি ইনপুট মিলিয়ে আপনার নামের সবচেয়ে নির্ভুল হিব্রু বানান দেবে।",record:"1. আপনার নাম রেকর্ড করুন",type:"2. আপনার নাম লিখুন",ph:"আপনার নাম লিখুন",go:"হিব্রু ভাষায় আপনার নাম আবিষ্কার করুন",recorded:"রেকর্ডিং নেওয়া হয়েছে ✓",typed:"নাম লেখা হয়েছে ✓",choose:"একাধিক সম্ভাব্য বানান পাওয়া গেছে। প্রতিটি শুনে আপনার নামের সবচেয়ে কাছেরটি বেছে নিন।",retry:"কোনোটিই ঠিক নয় — আবার রেকর্ড করুন"},
 zh:{intro:"为了尽可能准确地将您的名字写成希伯来语，请输入日常生活中别人称呼您的名字两次：第一次录音，第二次输入文字。系统会交叉比对两项信息，并给出最准确的希伯来语拼写。",record:"1. 录下您的名字",type:"2. 输入您的名字",ph:"输入您的名字",go:"发现您的希伯来语名字",recorded:"录音已收到 ✓",typed:"姓名已输入 ✓",choose:"我们找到了多个可能的拼写。请逐个试听并选择最像您名字读音的一项。",retry:"都不合适 — 重新录音"},
@@ -1347,31 +1330,32 @@ function isValidNameInput(value){
   return validContextualFinals(v)&&v.split(' ').every(w=>[...w].some(c=>/\p{L}/u.test(c)));
 }
 
-/* Version 16 — RECORDING IS AUTHORITATIVE.
+/* Version 17 — RECORDING IS PRIMARY; TYPED INPUT IS SECONDARY CROSS-CHECK.
    The browser speech recognizer supplies Hebrew hypotheses from the recording.
    Typed text is required by the current UX but is NEVER used as a Hebrew source,
    fallback, ranking signal, API payload, or candidate seed.
    The proprietary Hebrew-alternative rules stay on the private Cloudflare Worker. */
-const V16_API_BASE=String(window.V16_API_BASE||'').replace(/\/$/,'');
-const V16_API_ENDPOINT=V16_API_BASE+'/api/name-candidates';
+const V17_API_BASE=String(window.V17_API_BASE||'').replace(/\/$/,'');
+const V17_API_ENDPOINT=V17_API_BASE+'/api/name-candidates';
 let hebrewRecognition=null,hebrewRecognitionEnded=true,hebrewRecognitionHypotheses=[],hebrewRecognitionError='';
 function recognitionCtor(){return window.SpeechRecognition||window.webkitSpeechRecognition||null;}
-function addRecognitionHypothesis(value,priority=0){
+function addRecognitionHypothesis(value,priority=0,confidence=0){
   const n=normalizeHebrewName(value);if(!n||n.replace(/ /g,'').length<2)return;
   const old=hebrewRecognitionHypotheses.find(x=>x.text===n);
-  if(old){old.priority=Math.min(old.priority,priority);return;}
-  hebrewRecognitionHypotheses.push({text:n,priority});
-  hebrewRecognitionHypotheses.sort((a,b)=>a.priority-b.priority||a.text.length-b.text.length||a.text.localeCompare(b.text,'he'));
-  hebrewRecognitionHypotheses=hebrewRecognitionHypotheses.slice(0,8);
+  if(old){old.priority=Math.min(old.priority,priority);old.confidence=Math.max(old.confidence||0,confidence||0);return;}
+  hebrewRecognitionHypotheses.push({text:n,priority,confidence:Number(confidence)||0});
+  hebrewRecognitionHypotheses.sort((a,b)=>a.priority-b.priority||(b.confidence||0)-(a.confidence||0)||a.text.length-b.text.length||a.text.localeCompare(b.text,'he'));
+  hebrewRecognitionHypotheses=hebrewRecognitionHypotheses.slice(0,3);
 }
 function startHebrewRecognition(){
   const Ctor=recognitionCtor();hebrewRecognitionHypotheses=[];hebrewRecognitionError='';hebrewRecognitionEnded=true;
   if(!Ctor){hebrewRecognitionError='unsupported';return false;}
   try{
-    const r=new Ctor();hebrewRecognition=r;hebrewRecognitionEnded=false;r.lang='he-IL';r.continuous=false;r.interimResults=true;r.maxAlternatives=5;
+    const r=new Ctor();hebrewRecognition=r;hebrewRecognitionEnded=false;r.lang='he-IL';r.continuous=false;r.interimResults=false;r.maxAlternatives=3;
     r.onresult=e=>{
       for(let i=e.resultIndex;i<e.results.length;i++){
-        const row=e.results[i];for(let j=0;j<Math.min(row.length,5);j++)addRecognitionHypothesis(row[j].transcript,(i*10)+j+(row.isFinal?0:5));
+        const row=e.results[i];if(!row.isFinal)continue;
+        for(let j=0;j<Math.min(row.length,3);j++)addRecognitionHypothesis(row[j].transcript,j,row[j].confidence||0);
       }
     };
     r.onerror=e=>{hebrewRecognitionError=String(e?.error||'recognition-error');};
@@ -1379,31 +1363,28 @@ function startHebrewRecognition(){
     r.start();return true;
   }catch(e){hebrewRecognitionError='start-failed';hebrewRecognitionEnded=true;hebrewRecognition=null;return false;}
 }
-function stopHebrewRecognition(){
-  const r=hebrewRecognition;if(!r)return;try{r.stop()}catch(_e){try{r.abort()}catch(__e){}};
-}
-async function waitForHebrewRecognition(maxMs=1400){
-  const until=performance.now()+maxMs;while(!hebrewRecognitionEnded&&performance.now()<until)await new Promise(r=>setTimeout(r,60));
-}
-function clearHebrewRecognition(){
-  try{hebrewRecognition?.abort()}catch(_e){}hebrewRecognition=null;hebrewRecognitionEnded=true;hebrewRecognitionHypotheses=[];hebrewRecognitionError='';
-}
+function stopHebrewRecognition(){const r=hebrewRecognition;if(!r)return;try{r.stop()}catch(_e){try{r.abort()}catch(__e){}}}
+async function waitForHebrewRecognition(maxMs=1600){const until=performance.now()+maxMs;while(!hebrewRecognitionEnded&&performance.now()<until)await new Promise(r=>setTimeout(r,60));}
+function clearHebrewRecognition(){try{hebrewRecognition?.abort()}catch(_e){}hebrewRecognition=null;hebrewRecognitionEnded=true;hebrewRecognitionHypotheses=[];hebrewRecognitionError='';}
 function isPlausibleHebrewCandidate(name){
   const n=normalizeHebrewName(name);if(!n)return false;
   return n.split(/\s+/).every(w=>[...w].filter(c=>/[א-ת]/.test(c)).length>=2)&&validContextualFinals(n);
 }
-async function secureNameCandidatesFromHebrew(){
+async function secureNameCandidatesFromHebrew(typed){
   await waitForHebrewRecognition();
-  const heard=[...new Set(hebrewRecognitionHypotheses.map(x=>x.text).filter(isPlausibleHebrewCandidate))].slice(0,8);
+  const heard=[...new Set(hebrewRecognitionHypotheses.map(x=>x.text).filter(isPlausibleHebrewCandidate))].slice(0,3);
   if(!heard.length)throw new Error(hebrewRecognitionError||'no-hebrew-recognition');
-  if(!V16_API_BASE||/REPLACE/i.test(V16_API_BASE))throw new Error('engine-not-configured');
+  if(!V17_API_BASE||/REPLACE/i.test(V17_API_BASE))throw new Error('engine-not-configured');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
-    const res=await fetch(V16_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json','X-TPH-Client':'v16-simple'},body:JSON.stringify({heard}),signal:controller.signal});
+    const res=await fetch(V17_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json','X-TPH-Client':'v17-simple'},body:JSON.stringify({heard,typed:String(typed||'').slice(0,80)}),signal:controller.signal});
     if(!res.ok)throw new Error('secure-engine-'+res.status);
     const data=await res.json();
-    const candidates=Array.isArray(data.candidates)?[...new Set(data.candidates.map(normalizeHebrewName).filter(isPlausibleHebrewCandidate))].slice(0,24):[];
-    return {candidates,heard};
+    const records=Array.isArray(data.candidates)?data.candidates.map(x=>{
+      if(typeof x==='string')return {spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)};
+      return {spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')};
+    }).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,24):[];
+    return {candidates:records,heard,crossCheck:data.crossCheck||{used:false,mismatch:false}};
   }finally{clearTimeout(timer);}
 }
 const mic=document.getElementById("mic"), statusEl=document.getElementById("status"), resultBox=document.getElementById("resultBox");
@@ -1435,31 +1416,49 @@ function updateDualState(){
   const rc=document.getElementById('recordCheck'),tc=document.getElementById('typeCheck');rc.textContent='';tc.textContent='';if(hasRecording){setSuccessCheck(rc,u.recorded);setRingProgress(1);}if(validTyped)setSuccessCheck(tc,u.typed);
   const go=document.getElementById('discoverBtn');go.disabled=!(hasRecording&&validTyped);go.classList.toggle('ready',hasRecording&&validTyped);renderRecordingTools();
 }
-function speakHebrew(text){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang='he-IL';x.rate=.78;speechSynthesis.speak(x);}
-function renderFinalHebrew(hebrew,source){const code=sel.value||"en",t=T[code]||T.en;hebrew=applyFinalForms(hebrew);const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);const hebEl=document.getElementById("hebrew");hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById("resultAudioBtn").onclick=()=>speakHebrew(hebrew);const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();}
-function showChoices(cands){
-  const u=UX[sel.value]||UX.en,box=document.getElementById('choices');cands=[...new Set(cands.map(applyFinalForms).filter(isPlausibleHebrewCandidate))].slice(0,24);
-  if(!cands.length){box.hidden=true;return;}
-  box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
-  box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';box.hidden=true;resultBox.style.display='none';clearStatus();};
+function getHebrewVoice(){
+  if(!('speechSynthesis'in window))return null;
+  const voices=speechSynthesis.getVoices?.()||[];
+  return voices.find(v=>/^he(?:-|$)/i.test(v.lang||''))||voices.find(v=>/hebrew|עבר/i.test((v.name||'')+' '+(v.voiceURI||'')))||null;
 }
-
+function playOriginalRecording(){if(recordedAudioUrl)new Audio(recordedAudioUrl).play().catch(()=>{});}
+function speakCandidate(candidate){
+  const pronunciation=String(candidate?.pronunciation||candidate?.spelling||'').trim();
+  if(!pronunciation||!('speechSynthesis'in window)){playOriginalRecording();return;}
+  try{
+    speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(pronunciation),voice=getHebrewVoice();
+    x.lang='he-IL';if(voice)x.voice=voice;x.rate=.86;x.pitch=1;x.volume=1;
+    x.onerror=()=>playOriginalRecording();speechSynthesis.speak(x);
+  }catch(_e){playOriginalRecording();}
+}
+function renderFinalHebrew(candidate,source){
+  const code=sel.value||"en",t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,pronunciation:candidate}:candidate;
+  const hebrew=applyFinalForms(record.spelling||''),letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined),hebEl=document.getElementById("hebrew");
+  hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';
+  document.getElementById("resultAudioBtn").onclick=()=>speakCandidate({...record,spelling:hebrew});
+  const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');
+  document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();
+}
+function showChoices(records,crossCheck){
+  const u=UX[sel.value]||UX.en,box=document.getElementById('choices'),seen=new Set();
+  records=(records||[]).map(x=>typeof x==='string'?{spelling:x,pronunciation:x}:x).map(x=>({spelling:applyFinalForms(x.spelling||''),pronunciation:String(x.pronunciation||x.spelling||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&!seen.has(x.spelling)&&seen.add(x.spelling)).slice(0,24);
+  if(!records.length){box.hidden=true;return;}
+  const mismatch=crossCheck?.mismatch?'<div class="error-message" style="margin-bottom:10px">'+escapeHtml((V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch)+'</div>':'';
+  box.innerHTML=mismatch+'<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+records.map((r,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(r.spelling)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
+  box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(records[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakCandidate(records[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';box.hidden=true;resultBox.style.display='none';clearStatus();};
+}
 async function reconcileName(){
   const typedEl=document.getElementById('typedName'),typed=typedEl.value;if(!recordedAudioBlob||!isValidNameInput(typed))return;clearStatus();const btn=document.getElementById('discoverBtn');btn.disabled=true;
   try{
     statusEl.classList.remove('error-message');statusEl.textContent=(T[sel.value]||T.en).processing||'';
-    const result=await secureNameCandidatesFromHebrew();
-    const names=result.candidates||[];
-    if(names.length){recordedName=result.heard?.[0]||'';showChoices(names);updateDualState();return;}
+    const result=await secureNameCandidatesFromHebrew(typed),records=result.candidates||[];
+    if(records.length){recordedName=result.heard?.[0]||'';showChoices(records,result.crossCheck);updateDualState();return;}
     throw new Error('no-candidates');
   }catch(err){
-    console.warn('Private Hebrew alternative engine unavailable',err);resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');
-    const code=String(err?.message||'');
-    statusEl.textContent=(code==='no-hebrew-recognition'||code==='unsupported'||code==='start-failed'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.') : ((T[sel.value]||T.en).speechError||'Speech recognition error');
-    updateDualState();
+    console.warn('Private Hebrew alternative engine unavailable',err);resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');statusEl.textContent=(code==='no-hebrew-recognition'||code==='unsupported'||code==='start-failed'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();
   }
 }
-window.__nameEngineNextSelfTest=()=>({secure:true,clientRulesExposed:false,rawAudioSent:false,textAsrUsed:true,ipaUsed:false,typedCanSeedCandidates:false,typedSentToPrivateEngine:false,recordingAuthoritative:true,endpoint:V16_API_ENDPOINT});
+window.__nameEngineNextSelfTest=()=>({version:17,secure:true,clientRulesExposed:false,rawAudioSent:false,textAsrUsed:true,ipaUsed:false,typedCanSeedCandidates:false,typedSentToPrivateEngine:true,recordingPrimary:true,typedCrossCheck:true,finalAsrOnly:true,separatePronunciation:true,endpoint:V17_API_ENDPOINT});
 window.__inputNextSelfTest=function(){
   const cases=[['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],["ג'ורג'","ג'ורג'",true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]];
   return cases.map(([raw,clean,valid])=>{const got=sanitizeNameInput(raw);return {raw,expectedClean:clean,actualClean:got,expectedValid:valid,actualValid:isValidNameInput(got),pass:got===clean&&isValidNameInput(got)===valid};});

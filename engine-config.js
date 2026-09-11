@@ -1,1 +1,1 @@
-window.V16_API_BASE='https://privatefunthepowerofhebrew.eliyahu261708.workers.dev';
+window.V17_API_BASE='https://privatefunthepowerofhebrew.eliyahu261708.workers.dev';
