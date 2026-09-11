@@ -1303,8 +1303,8 @@ function isPlausibleHebrewCandidate(name){
    Tap once -> speak -> automatic stop after ~1s silence (8s hard maximum)
    -> one private acoustic transcription -> Hebrew sound candidates.
    No typed input and no cross-check in this version. */
-const V27_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
-const V27_API_ENDPOINT=V27_API_BASE+'/api/name-candidates';
+const V28_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
+const V28_API_ENDPOINT=V28_API_BASE+'/api/name-candidates';
 const mic=document.getElementById('mic'),statusEl=document.getElementById('status'),resultBox=document.getElementById('resultBox');
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
 let recordState='idle',recordStartedAt=0,recordMaxTimer=null,ringRaf=null,pointerId=null,processAfterStop=true;
@@ -1393,15 +1393,16 @@ function showChoices(records){
 }
 
 async function secureNameCandidatesFromAudio(){
-  if(!recordedAudioBlob)throw new Error('audio-required');if(!V27_API_BASE||/REPLACE/i.test(V27_API_BASE))throw new Error('engine-not-configured');
+  if(!recordedAudioBlob)throw new Error('audio-required');if(!V28_API_BASE||/REPLACE/i.test(V28_API_BASE))throw new Error('engine-not-configured');
   const form=new FormData();form.append('audio',recordedAudioBlob,'name.'+(recordedAudioBlob.type.includes('mp4')?'m4a':'webm'));
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
   try{
-    const res=await fetch(V27_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json','X-TPH-Client':'v27-audio'},body:form,signal:controller.signal});
+    const res=await fetch(V28_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json'},body:form,signal:controller.signal});
     let data=null;try{data=await res.json();}catch(_e){}
+    window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,stage:data?.stage||null};
     if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
     const records=Array.isArray(data?.candidates)?data.candidates.map(x=>typeof x==='string'?{spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)}:{spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')}).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,64):[];
-    if(!records.length)throw new Error('no-candidates');return {candidates:records,heard:data?.heard||[],base:data?.base||'',recognition:data?.recognition||'server-audio-v27'};
+    if(!records.length)throw new Error('no-candidates');window.__lastNameEngineDiagnostic={ok:true,status:res.status,version:data?.version||28,error:null,stage:'recording-only'};return {candidates:records,heard:data?.heard||[],base:data?.base||'',recognition:data?.recognition||'server-audio-v28'};
   }finally{clearTimeout(timer);}
 }
 async function processRecordedAudio(){
@@ -1416,7 +1417,8 @@ async function processRecordedAudio(){
 async function startAudioCapture(){
   if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
   mediaStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});recordedChunks=[];
-  mediaRecorder=new MediaRecorder(mediaStream);
+  const preferredMime=['audio/webm;codecs=opus','audio/webm','audio/mp4;codecs=mp4a.40.2','audio/mp4'].find(t=>MediaRecorder.isTypeSupported?.(t));
+  mediaRecorder=preferredMime?new MediaRecorder(mediaStream,{mimeType:preferredMime}):new MediaRecorder(mediaStream);
   mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data);};
   mediaRecorder.onstop=()=>{
     clearRecordTimer();stopRing();stopVoiceActivityMonitor();
@@ -1427,7 +1429,7 @@ async function startAudioCapture(){
     if(shouldProcess&&recordedAudioBlob)processRecordedAudio();
     else if(shouldProcess&&!recordedAudioBlob){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).noName||'No name was recognized. Please record again.';}
   };
-  mediaRecorder.start(200);
+  mediaRecorder.start();
 }
 function stopRecording(reason='auto'){
   if(recordState!=='recording')return;recordState='stopping';clearRecordTimer();stopRing();stopVoiceActivityMonitor();
@@ -1446,7 +1448,7 @@ async function beginRecording(e){
 function releaseRecording(e){
   if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;e?.preventDefault?.();
   if(pointerId!==null){try{mic.releasePointerCapture(pointerId)}catch(_e){}}pointerId=null;
-  // V27: releasing the button does NOT stop the recording. Silence/8-second limit does.
+  // V28: releasing the button does NOT stop the recording. Silence/8-second limit does.
 }
 function resetRecording(clearStatusToo=true){
   clearRecordTimer();stopRing();stopVoiceActivityMonitor();processAfterStop=false;
@@ -1455,7 +1457,7 @@ function resetRecording(clearStatusToo=true){
   if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');updateDualState();if(clearStatusToo)clearStatus();
 }
 
-window.__nameEngineNextSelfTest=()=>({version:27,recordingOnly:true,oneAudioTranscription:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,secondAsrPass:false,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,endpoint:V27_API_ENDPOINT});
+window.__nameEngineNextSelfTest=()=>({version:28,recordingOnly:true,oneAudioTranscription:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,secondAsrPass:false,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,endpoint:V28_API_ENDPOINT});
 
 ensureRecorderLayout();
 mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',releaseRecording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1552,7 +1554,7 @@ document.addEventListener('DOMContentLoaded',function(){
 }
 </style>
 
-<style id="v27-recording-only-scope">
+<style id="v28-recording-only-scope">
 #v27TypedField,#discoverBtn{display:none!important}
 .dual-inputs{grid-template-columns:1fr!important}
 </style>
