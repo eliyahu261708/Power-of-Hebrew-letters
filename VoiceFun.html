@@ -988,6 +988,17 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
 #status{position:static!important;display:block!important;min-height:24px!important;margin:10px auto 0!important;line-height:1.35!important}
 #status.error-message{color:#ff5d5d!important;font-weight:700!important}
 </style>
+
+<style id="next-release-nav-active">
+.page-nav a{font-weight:800!important}
+.page-nav a.active{
+  border:1px solid #9f8238!important;
+  background:linear-gradient(180deg,var(--gold2),var(--gold))!important;
+  color:#111!important;
+  font-weight:800!important;
+  box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.20)!important;
+}
+</style>
 </head>
 <body>
 
@@ -1273,41 +1284,88 @@ ur:{mismatch:"ریکارڈنگ اور ٹائپ کیا گیا نام مطابقت
 vi:{mismatch:"Bản ghi âm và tên đã nhập không khớp. Hãy kiểm tra tên hoặc ghi âm lại.",listen:"Nghe bản ghi",again:"Ghi âm lại",hearName:"Nghe tên"}
 };
 let recordedName="";
+
+/* =====================================================================
+   Hebrew-first name engine
+   Guiding rule: SOUND > SPELLING. Every audio path is decoded into the
+   Hebrew target space first. Source-language text is only secondary
+   confirmation and never dictates the Hebrew result.
+   ===================================================================== */
 function applyFinalForms(text){
   return String(text||"").replace(/כ(?=$|\s)/g,"ך").replace(/מ(?=$|\s)/g,"ם").replace(/נ(?=$|\s)/g,"ן").replace(/פ(?=$|\s)/g,"ף").replace(/צ(?=$|\s)/g,"ץ");
 }
+function normalizeFinalsForCompare(value){return String(value||"").replace(/ך/g,"כ").replace(/ם/g,"מ").replace(/ן/g,"נ").replace(/ף/g,"פ").replace(/ץ/g,"צ").replace(/[׳’']/g,"");}
 function normalizeHebrewName(value){
   return applyFinalForms(String(value||"").replace(/[’']/g,"׳").replace(/[^א-ת׳ ]/g,"").replace(/\s+/g," ").trim());
 }
-function sanitizeNameInput(value){return [...String(value||"")].filter(ch=>/\p{L}/u.test(ch)||ch==="'"||ch==="’"||ch==="׳").join("");}
-function isValidNameInput(value){const v=String(value||"").trim();return !!v&&[...v].every(ch=>/\p{L}/u.test(ch)||ch==="'"||ch==="’"||ch==="׳");}
+const HEBREW_FINAL_TO_MEDIAL={"ך":"כ","ם":"מ","ן":"נ","ף":"פ","ץ":"צ"};
+function normalizeContextualLetters(value){
+  let s=String(value||"").normalize('NFKC').replace(/[\uFB50-\uFDFF\uFE70-\uFEFF]/g,ch=>ch.normalize('NFKC'));
+  const a=[...s];
+  for(let i=0;i<a.length;i++){
+    const ch=a[i];
+    if(HEBREW_FINAL_TO_MEDIAL[ch]){
+      let laterHebrew=false;
+      for(let j=i+1;j<a.length&&a[j]!==" ";j++){if(/[א-ת]/.test(a[j])){laterHebrew=true;break;}}
+      if(laterHebrew)a[i]=HEBREW_FINAL_TO_MEDIAL[ch];
+    }
+    if(ch==='ς'){
+      let laterGreek=false;
+      for(let j=i+1;j<a.length&&a[j]!==" ";j++){if(/[\u0370-\u03FF\u1F00-\u1FFF]/.test(a[j])){laterGreek=true;break;}}
+      if(laterGreek)a[i]='σ';
+    }
+  }
+  return a.join('');
+}
+function sanitizeNameInput(value){
+  let out='',lastSpace=false;
+  for(const ch of [...String(value||"").normalize('NFKC')]){
+    if(/\p{L}/u.test(ch)||ch==="'"||ch==="’"||ch==="׳") {out+=ch;lastSpace=false;continue;}
+    if(/\s/u.test(ch)&&out&&!lastSpace){out+=' ';lastSpace=true;}
+  }
+  return normalizeContextualLetters(out);
+}
+function validContextualFinals(value){
+  const words=String(value||'').trim().split(/\s+/).filter(Boolean);
+  for(const word of words){
+    const chars=[...word];
+    for(let i=0;i<chars.length;i++){
+      if(HEBREW_FINAL_TO_MEDIAL[chars[i]]){
+        if(chars.slice(i+1).some(c=>/[א-ת]/.test(c)))return false;
+      }
+      if(chars[i]==='ς'&&chars.slice(i+1).some(c=>/[\u0370-\u03FF\u1F00-\u1FFF]/.test(c)))return false;
+    }
+  }
+  return true;
+}
+function isValidNameInput(value){
+  const v=String(value||"");
+  if(!v||v!==v.trim()||/\s{2,}/.test(v))return false;
+  if(![...v].every(ch=>/\p{L}/u.test(ch)||ch==="'"||ch==="’"||ch==="׳"||ch===" "))return false;
+  return validContextualFinals(v)&&v.split(' ').every(w=>[...w].some(c=>/\p{L}/u.test(c)));
+}
 
-/* Release 11 name engine.
-   Audio and typing stay independent. Whisper supplies a hearing hypothesis;
-   this local engine expands that hypothesis into ranked Hebrew spellings and
-   only then cross-checks them against the typed source. */
 const HEBREW_SOUND_ALTERNATIVES={
-  "ב":[["ב",0],["ו",.34]],"ו":[["ו",0],["ב",.30]],
-  "כ":[["כ",0],["ק",.28],["ח",.34]],"ך":[["כ",0],["ק",.28],["ח",.34]],
-  "ק":[["ק",0],["כ",.28]],"ח":[["ח",0],["כ",.30]],
-  "ט":[["ט",0],["ת",.28]],"ת":[["ת",0],["ט",.28]],
-  "א":[["א",0],["ע",.32],["ה",.44],["",.38]],"ע":[["ע",0],["א",.32],["",.48]],
-  "ה":[["ה",0],["א",.44],["",.36]],"י":[["י",0],["",.34]],
-  "ס":[["ס",0],["ש",.50],["צ",.58]],"ש":[["ש",0],["ס",.50]],
-  "פ":[["פ",0],["ב",.60]],"ף":[["פ",0],["ב",.60]],
-  "ג":[["ג",0],["ג׳",.40]],"ז":[["ז",0],["ז׳",.50]]
+  "ב":[["ב",0],["ו",.24]],"ו":[["ו",0],["ב",.25]],
+  "כ":[["כ",0],["ק",.24],["ח",.28]],"ך":[["כ",0],["ק",.24],["ח",.28]],
+  "ק":[["ק",0],["כ",.24]],"ח":[["ח",0],["כ",.25]],
+  "ט":[["ט",0],["ת",.23]],"ת":[["ת",0],["ט",.23]],
+  "א":[["א",0],["ע",.27],["ה",.34],["",.32]],"ע":[["ע",0],["א",.27],["",.38]],
+  "ה":[["ה",0],["א",.34],["",.30],["ח",.42]],"י":[["י",0],["",.27]],
+  "ס":[["ס",0],["ז",.23],["ש",.42],["צ",.52]],"ז":[["ז",0],["ס",.23],["ז׳",.45]],"ש":[["ש",0],["ס",.42]],
+  "פ":[["פ",0],["ב",.52]],"ף":[["פ",0],["ב",.52]],
+  "ג":[["ג",0],["ג׳",.34]],"צ":[["צ",0],["ס",.52]],"ץ":[["צ",0],["ס",.52]],
+  "מ":[["מ",0]],"ם":[["מ",0]],"נ":[["נ",0]],"ן":[["נ",0]]
 };
-/* Release 12: local name prior. This is intentionally only a ranking prior:
-   a spelling must first be generated from the recorded sound. */
 const COMMON_HEBREW_NAMES=new Set(`
-אבי אביב אביגיל אביתר אבנר אברהם אדם אהוד אהרון איל אילן אילנה אילת איתי איתן אלון אלי אליה אליהו אליאב אליאור אלירן אמיר אמיתי אסף אריאל אריה ארז בארי בן בנימין בר ברק בתאל גבריאל גדי גדעון גל גלעד דב דבורה דוד דניאל דניאלה דפנה דור דורון דרור הדס הילה הלל ורד זיו זוהר חוה חיים חן טל יאיר יובל יהודה יונתן יוסף יוסי יעל יפעת יצחק ירון ישראל ישי ליאור ליה ליאם לינוי לירון מאיה מאיר מיכאל מיכל משה מור מורן מרים מתן נועה נועם ניב ניר ניסים נעמי נעמה נתן נתנאל סיוון סיגל עמית עמיחי עידן עידו עומר עומרי ענת ערן פז צבי קרן רון רוני רות רחל רפאל שחר שי שירה שלומי שלמה שמואל שרון תומר תמר
-אדל אדריאן אלברט אלכס אלכסנדר אלנה אנדריי אנה אנטון אריק ברברה דיאנה דניס ויקטור ולדימיר ולנטינה יוליה יורי כריסטינה לאורה לוקה ליאון לינדה מריה מרינה מרקו מקסים ניקול ניקולס נטליה סופיה סרגיי פאולו פדרו קרלוס רוברט רומן
+אבי אביב אביגיל אביתר אבנר אברהם אדם אהוד אהרון איל אילן אילנה אילת איתי איתן אלון אלי אליה אליהו אליאב אליאור אלירן אמיר אמיתי אסף אריאל אריה ארז בארי בן בנימין בר ברק בתאל גבריאל גדי גדעון גל גלעד דב דבורה דוד דני דניאל דניאלה דפנה דור דורון דרור הדס הילה הלל ורד זיו זוהר חוה חיים חן טל יאיר יובל יהודה יונתן יוסף יוסי יעל יפעת יצחק ירון ישראל ישי ליאור ליה ליאם לינוי לירון מאיה מאיר מיכאל מיכל משה מור מורן מרים מתן נועה נועם ניב ניר ניסים נעמי נעמה נתן נתנאל סיוון סיגל עמית עמיחי עידן עידו עומר עומרי ענת ערן פז צבי קרן רון רוני רות רחל רפאל שחר שי שירה שלומי שלמה שמואל שרון תומר תמר
+אדל אדריאן אלברט אלכס אלכסנדר אלנה אנדריי אנה אנטון אריק ברברה דיאנה דניס ויקטור ולדימיר ולנטינה יוליה יורי כריסטינה לאורה לוקה ליאון לינדה מריה מרינה מרקו מקסים מוזס מוחמד מחמאד מקסים ניקול ניקולס נטליה סופיה סרגיי פאולו פדרו קרלוס רוברט רומן
 ג׳ורג׳ ג׳ון ג׳יימס ג׳ק ג׳ייקוב ג׳וזף ג׳וליה ג׳ניפר דיוויד מייקל מישל סטיבן סטיב סוזן שרה תומאס ויליאם ריצ׳רד צ׳רלס
 `.trim().split(/\s+/));
 function hebrewNamePriorBonus(name){
   const n=normalizeHebrewName(name);if(!n)return 0;
-  if(COMMON_HEBREW_NAMES.has(n))return .22;
-  const parts=n.split(/\s+/).filter(Boolean);if(parts.length>1&&parts.every(x=>COMMON_HEBREW_NAMES.has(x)))return .16;
+  if(COMMON_HEBREW_NAMES.has(n))return .20;
+  const parts=n.split(/\s+/).filter(Boolean);if(parts.length>1&&parts.every(x=>COMMON_HEBREW_NAMES.has(x)))return .14;
   return 0;
 }
 function rankedUnique(items,limit,key="name"){
@@ -1315,60 +1373,63 @@ function rankedUnique(items,limit,key="name"){
   for(const item of items){const k=item[key];if(!k)continue;const old=map.get(k);if(!old||item.score<old.score)map.set(k,item);}
   return [...map.values()].sort((a,b)=>a.score-b.score).slice(0,limit);
 }
-function hebrewOrthographicVariants(raw,limit=40){
+function isPlausibleHebrewCandidate(name){
+  const n=normalizeHebrewName(name);if(!n)return false;
+  const words=n.split(/\s+/).filter(Boolean);if(!words.length)return false;
+  for(const w of words){const letters=[...w].filter(c=>/[א-ת]/.test(c));if(letters.length<2)return false;}
+  return validContextualFinals(n);
+}
+function hebrewOrthographicVariants(raw,limit=52){
   const base=normalizeHebrewName(raw);if(!base)return [];
   let states=[{text:"",score:0}];
   for(const ch of [...base]){
+    if(ch===" "){states=states.map(x=>({text:x.text+" ",score:x.score}));continue;}
     if(ch==="׳"){states=states.map(x=>({text:x.text+"׳",score:x.score}));continue;}
-    const opts=HEBREW_SOUND_ALTERNATIVES[ch]||[[ch,0]],next=[];
+    const opts=HEBREW_SOUND_ALTERNATIVES[ch]||[[HEBREW_FINAL_TO_MEDIAL[ch]||ch,0]],next=[];
     for(const st of states)for(const [out,cost] of opts)next.push({text:st.text+out,score:st.score+cost});
     states=rankedUnique(next,limit,"text");
   }
-  return rankedUnique(states.map(x=>({name:normalizeHebrewName(x.text),score:x.score})).filter(x=>x.name),limit);
+  return rankedUnique(states.map(x=>({name:normalizeHebrewName(x.text),score:x.score})).filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
 }
 function latinTokenOptions(word,i){
   const rest=word.slice(i),len=word.length,add=(n,outs)=>({len:n,outs});
-  if(/^(ai|ay|ei|ey)/.test(rest))return add(2,[["אי",.03],["יי",.22],["י",.34],["איי",.42]]);
-  if(rest.startsWith("ie"))return add(2,rest.length===2?[["י",.02],["יה",.18],["יא",.30]]:[["יא",.03],["י",.22],["יה",.30]]);
-  if(rest.startsWith("ia"))return add(2,[["יה",.08],["יא",.14],["י",.34]]);
-  if(rest.startsWith("io"))return add(2,[["יו",.06],["יאו",.26]]);
-  if(rest.startsWith("oa"))return add(2,[["וע",.08],["ועה",.12],["ואה",.20],["וא",.28]]);
-  if(/^(oi|oy)/.test(rest))return add(2,[["וי",.06],["ואי",.24]]);
-  if(/^(ou|oo)/.test(rest))return add(2,[["ו",.03],["או",.24]]);
-  if(rest.startsWith("ea"))return add(2,[["י",.18],["א",.26],["יא",.34]]);
-  if(rest.startsWith("ae"))return add(2,[["א",.04],["ע",.18],["אי",.22],["אה",.30]]);
+  if(/^(ai|ay|ei|ey)/.test(rest))return add(2,[["אי",.02],["יי",.20],["י",.30],["איי",.38]]);
+  if(rest.startsWith("ie"))return add(2,rest.length===2?[["י",.02],["יה",.16],["יא",.28]]:[["יא",.03],["י",.20],["יה",.28]]);
+  if(rest.startsWith("ia"))return add(2,[["יה",.07],["יא",.12],["י",.30]]);
+  if(rest.startsWith("io"))return add(2,[["יו",.05],["יאו",.24]]);
+  if(rest.startsWith("oa"))return add(2,[["וע",.08],["ועה",.12],["ואה",.18],["וא",.25]]);
+  if(/^(oi|oy)/.test(rest))return add(2,[["וי",.05],["ואי",.20]]);
+  if(/^(ou|oo)/.test(rest))return add(2,[["ו",.02],["או",.20]]);
+  if(rest.startsWith("ea"))return add(2,[["י",.16],["א",.24],["יא",.30]]);
+  if(rest.startsWith("ae"))return add(2,[["א",.04],["ע",.16],["אי",.20],["אה",.26]]);
   const multi=[
-    ["tch",[["צ׳",.02],["טש",.45]]],["sch",[["ש",.02],["סק",.60]]],
-    ["sh",[["ש",.01]]],["zh",[["ז׳",.03],["ז",.30]]],["kh",[["ח",.02],["כ",.20]]],
-    ["ph",[["פ",.02]]],["th",[["ת",.08],["ט",.34],["ד",.58]]],["ts",[["צ",.05],["טס",.45]]],
-    ["tz",[["צ",.05]]],["qu",[["קוו",.08],["ק",.34]]],["ng",[["נג",.10],["נ",.44]]],["ck",[["ק",.05],["כ",.26]]]
+    ["tch",[["צ׳",.02],["טש",.42]]],["sch",[["ש",.02],["סק",.55]]],
+    ["sh",[["ש",.01]]],["zh",[["ז׳",.02],["ז",.25]]],["kh",[["ח",.02],["כ",.16]]],
+    ["ph",[["פ",.02]]],["th",[["ת",.08],["ט",.28],["ד",.50]]],["ts",[["צ",.04],["טס",.38]]],
+    ["tz",[["צ",.04]]],["qu",[["קוו",.07],["ק",.28]]],["ng",[["נג",.08],["נ",.38]]],["ck",[["ק",.04],["כ",.22]]]
   ];
   for(const [token,outs] of multi)if(rest.startsWith(token))return add(token.length,outs);
-  if(rest.startsWith("ch")){
-    const prev=word[i-1]||"",after=word[i+2]||"",after2=word[i+3]||"";
-    if(prev==="i"&&after==="a"&&after2==="e")return add(2,[["כ",.08],["ק",.18],["ח",.24],["צ׳",.34]]);
-    return add(2,[["צ׳",.12],["ח",.18],["כ",.34],["ק",.42]]);
-  }
-  const ch=word[i],next=word[i+1]||"",isStart=i===0,isEnd=i===len-1;
+  if(rest.startsWith("ch"))return add(2,[["צ׳",.10],["ח",.14],["כ",.28],["ק",.36]]);
+  const ch=word[i],next=word[i+1]||"",prev=word[i-1]||"",isStart=i===0,isEnd=i===len-1;
   if(/[aeiou]/.test(ch)){
-    if(ch==="a")return add(1,isStart?[["א",.02],["ע",.42]]:isEnd?[["ה",.02],["א",.24],["",.38]]:[["",.05],["א",.24],["ה",.38]]);
-    if(ch==="e")return add(1,isStart?[["א",.08],["ה",.30],["י",.40]]:isEnd?[["",.02],["ה",.22],["י",.36]]:[["",.08],["ה",.26],["א",.34],["י",.40]]);
-    if(ch==="i")return add(1,isStart?[["אי",.08],["י",.16]]:[["י",.03],["",.26]]);
-    if(ch==="o")return add(1,isStart?[["או",.06],["ו",.20]]:[["ו",.04],["",.26]]);
-    if(ch==="u")return add(1,isStart?[["או",.10],["ו",.16]]:[["ו",.04],["",.24]]);
+    if(ch==="a")return add(1,isStart?[["א",.02],["ע",.34]]:isEnd?[["ה",.02],["א",.20],["",.34]]:[["",.05],["א",.20],["ה",.32]]);
+    if(ch==="e")return add(1,isStart?[["א",.07],["ה",.26],["י",.36]]:isEnd?[["",.02],["ה",.18],["י",.30]]:[["",.07],["ה",.22],["א",.30],["י",.34]]);
+    if(ch==="i")return add(1,isStart?[["אי",.07],["י",.14]]:[["י",.03],["",.22]]);
+    if(ch==="o")return add(1,isStart?[["או",.05],["ו",.16]]:[["ו",.03],["",.22]]);
+    if(ch==="u")return add(1,isStart?[["או",.08],["ו",.13]]:[["ו",.03],["",.20]]);
   }
-  const softG=ch==="g"&&/[eiy]/.test(next);
+  const softG=ch==="g"&&/[eiy]/.test(next),intervocalicS=ch==='s'&&/[aeiouy]/.test(prev)&&/[aeiouy]/.test(next);
   const cons={
-    b:[["ב",.02],["ו",.55]],c:[["ק",.14],["ס",.20],["כ",.34]],d:[["ד",.01]],f:[["פ",.01]],
-    g:softG?[["ג׳",.05],["ג",.22]]:[["ג",.02],["ג׳",.34]],h:[["ה",.12],["ח",.34],["",.44]],
-    j:[["ג׳",.02],["י",.38]],k:[["ק",.08],["כ",.16]],l:[["ל",.01]],m:[["מ",.01]],n:[["נ",.01]],
-    p:[["פ",.01]],q:[["ק",.02]],r:[["ר",.01]],s:[["ס",.04],["ש",.26]],t:[["ט",.10],["ת",.14]],
-    v:[["ב",.04],["ו",.24]],w:[["ו",.03],["ב",.42]],x:[["קס",.04],["ז",.36]],z:[["ז",.02]],
-    y:isStart&&/[aeiou]/.test(next)?[["י",.02]]:[["י",.04],["",.30]]
+    b:[["ב",.02],["ו",.48]],c:[["ק",.12],["ס",.18],["כ",.30]],d:[["ד",.01]],f:[["פ",.01]],
+    g:softG?[["ג׳",.04],["ג",.20]]:[["ג",.02],["ג׳",.30]],h:[["ה",.08],["ח",.11],["",.40]],
+    j:[["ג׳",.02],["י",.34]],k:[["ק",.07],["כ",.13]],l:[["ל",.01]],m:[["מ",.01]],n:[["נ",.01]],
+    p:[["פ",.01]],q:[["ק",.02]],r:[["ר",.01]],s:intervocalicS?[["ז",.02],["ס",.08],["ש",.30]]:[["ס",.03],["ז",.14],["ש",.24]],t:[["ט",.09],["ת",.12]],
+    v:[["ב",.04],["ו",.18]],w:[["ו",.03],["ב",.36]],x:[["קס",.04],["ז",.30]],z:[["ז",.02],["ס",.20]],
+    y:isStart&&/[aeiou]/.test(next)?[["י",.02]]:[["י",.04],["",.26]]
   };
   return add(1,cons[ch]||[["",1.2]]);
 }
-function latinWordCandidates(word,limit=56){
+function latinWordCandidates(word,limit=64){
   word=String(word||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"");
   if(!word)return [];
   let states=[{i:0,text:"",score:0}],done=[];
@@ -1381,80 +1442,104 @@ function latinWordCandidates(word,limit=56){
       }
       const o=latinTokenOptions(word,st.i);for(const [out,cost] of o.outs)next.push({i:st.i+o.len,text:st.text+out,score:st.score+cost});
     }
-    next.sort((a,b)=>a.score-b.score||b.i-a.i);
-    const seen=new Set();states=[];
+    next.sort((a,b)=>a.score-b.score||b.i-a.i);const seen=new Set();states=[];
     for(const x of next){const k=x.i+"|"+x.text;if(!seen.has(k)){seen.add(k);states.push(x);}if(states.length>=limit)break;}
     if(done.length>limit*3)break;
   }
-  return rankedUnique(done.map(x=>({name:normalizeHebrewName(x.text).replace(/אא/g,"א").replace(/הה/g,"ה").replace(/ווי/g,"וי"),score:x.score})).filter(x=>x.name),limit);
+  return rankedUnique(done.map(x=>({name:normalizeHebrewName(x.text).replace(/אא/g,"א").replace(/הה/g,"ה").replace(/ווי/g,"וי"),score:x.score})).filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
 }
-const SCRIPT_TO_LATIN={
-  "а":"a","б":"b","в":"v","г":"g","д":"d","е":"e","ё":"yo","ж":"zh","з":"z","и":"i","й":"y","к":"k","л":"l","м":"m","н":"n","о":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sh","ы":"i","э":"e","ю":"yu","я":"ya","і":"i","ї":"yi","є":"ye","ґ":"g",
-  "α":"a","β":"v","γ":"g","δ":"d","ε":"e","ζ":"z","η":"i","θ":"th","ι":"i","κ":"k","λ":"l","μ":"m","ν":"n","ξ":"x","ο":"o","π":"p","ρ":"r","σ":"s","ς":"s","τ":"t","υ":"i","φ":"f","χ":"kh","ψ":"ps","ω":"o",
-  "ا":"a","أ":"a","إ":"i","آ":"a","ب":"b","پ":"p","ت":"t","ث":"th","ج":"j","چ":"ch","ح":"h","خ":"kh","د":"d","ذ":"z","ر":"r","ز":"z","ژ":"zh","س":"s","ش":"sh","ص":"s","ض":"d","ط":"t","ظ":"z","ع":"a","غ":"gh","ف":"f","ق":"q","ك":"k","ک":"k","گ":"g","ل":"l","م":"m","ن":"n","ه":"h","ہ":"h","و":"w","ي":"i","ی":"i","ى":"a"
+
+/* Direct Arabic/Persian/Urdu -> Hebrew sound mapping. This is secondary to
+   the direct Hebrew audio decode, but it preserves deep consonants instead of
+   collapsing them through Latin (e.g. ح -> ח, ع -> ע, خ -> כ/ח). */
+const ARABIC_TO_HEBREW={
+  'ا':[['א',.10]],'أ':[['א',.08]],'إ':[['א',.10],['י',.20]],'آ':[['א',.05]],'ء':[['א',.18]],
+  'ب':[['ב',.02]],'پ':[['פ',.02]],'ت':[['ת',.04],['ט',.16]],'ث':[['ת',.12],['ס',.18]],
+  'ج':[['ג׳',.05],['ג',.18]],'چ':[['צ׳',.04]],'ح':[['ח',.01]],'خ':[['כ',.05],['ח',.12]],
+  'د':[['ד',.02]],'ذ':[['ז',.08],['ד',.18]],'ر':[['ר',.02]],'ز':[['ז',.02]],'ژ':[['ז׳',.04]],
+  'س':[['ס',.02]],'ش':[['ש',.02]],'ص':[['ס',.05],['צ',.22]],'ض':[['ד',.12],['צ',.26]],
+  'ط':[['ט',.03]],'ظ':[['ז',.10],['ט',.18]],'ع':[['ע',.02],['א',.22]],'غ':[['ג',.10],['ע',.20]],
+  'ف':[['פ',.02]],'ق':[['ק',.02]],'ك':[['כ',.05],['ק',.12]],'ک':[['כ',.05],['ק',.12]],'گ':[['ג',.03]],
+  'ل':[['ל',.02]],'م':[['מ',.01]],'ن':[['נ',.01]],'ه':[['ה',.03]],'ہ':[['ה',.03]],
+  'و':[['ו',.03]],'ي':[['י',.03]],'ی':[['י',.03]],'ى':[['י',.12],['א',.24]],'ة':[['ה',.06],['ת',.18]]
 };
-function approximateToLatin(raw){
-  let changed=false,out="";for(const ch of String(raw||"").toLowerCase()){if(SCRIPT_TO_LATIN[ch]!==undefined){out+=SCRIPT_TO_LATIN[ch];changed=true;}else if(/[a-z\s]/.test(ch))out+=ch;else if(/\p{L}/u.test(ch))out+=" ";}
-  return changed?out.replace(/\s+/g," ").trim():"";
+function directArabicCandidates(raw,limit=48){
+  const text=String(raw||'').normalize('NFKC').replace(/[\u064B-\u065F\u0670]/g,'').trim();
+  if(!/[\u0600-\u06FF]/.test(text))return [];
+  let states=[{name:'',score:0}];
+  for(const ch of [...text]){
+    if(/\s/.test(ch)){states=states.map(x=>({name:x.name+' ',score:x.score}));continue;}
+    const opts=ARABIC_TO_HEBREW[ch];if(!opts)continue;
+    const next=[];for(const st of states)for(const [o,c] of opts)next.push({name:st.name+o,score:st.score+c});states=rankedUnique(next,limit);
+  }
+  const expanded=[];
+  for(const x of states){
+    const n=normalizeHebrewName(x.name);if(!n)continue;expanded.push({name:n,score:x.score+.10});
+    /* Arabic script often omits short vowels. Hebrew vowel letters are allowed
+       only as low-weight alternatives; the audio decode remains the leader. */
+    if(/^מחמד$/.test(normalizeFinalsForCompare(n))){expanded.push({name:'מוחמד',score:x.score+.16},{name:'מחמאד',score:x.score+.20});}
+  }
+  return rankedUnique(expanded.filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
 }
-function generateHebrewNameCandidates(raw,limit=48){
-  let text=cleanRecognizedName(raw);if(!text)return [];
+function generateHebrewNameCandidates(raw,limit=56){
+  const text=cleanRecognizedName(raw);if(!text)return [];
   if(/[א-ת]/.test(text))return hebrewOrthographicVariants(text,limit);
+  const ar=directArabicCandidates(text,limit);if(ar.length)return ar;
   let latin=text.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  if(!/[A-Za-z]/.test(latin))latin=approximateToLatin(text);
-  if(!latin)return [];
+  if(!/[A-Za-z]/.test(latin))return [];
   const words=latin.split(/\s+/).filter(Boolean);let combos=[{name:"",score:0}];
   for(const word of words){
-    const wc=latinWordCandidates(word,limit).slice(0,20);if(!wc.length)continue;
+    const wc=latinWordCandidates(word,limit).slice(0,24);if(!wc.length)continue;
     const next=[];for(const a of combos)for(const b of wc)next.push({name:(a.name?a.name+" ":"")+b.name,score:a.score+b.score});
     combos=rankedUnique(next,limit);
   }
-  return rankedUnique(combos.map(x=>({name:normalizeHebrewName(x.name),score:x.score})).filter(x=>x.name),limit);
+  return rankedUnique(combos.map(x=>({name:normalizeHebrewName(x.name),score:x.score})).filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
 }
-function normalizeFinalsForCompare(value){return String(value||"").replace(/ך/g,"כ").replace(/ם/g,"מ").replace(/ן/g,"נ").replace(/ף/g,"פ").replace(/ץ/g,"צ").replace(/׳/g,"");}
 function hebrewSubstitutionCost(a,b){
   if(a===b)return 0;const pair=a+b;
-  if(["בו","וב","כק","קכ","כח","חכ","טת","תט","אע","עא"].includes(pair))return .24;
-  if(["אה","הא","או","וא","אי","יא","הי","יה","הו","וה"].includes(pair))return .36;
-  if(["סש","שס","סצ","צס"].includes(pair))return .48;
-  if(["פב","בפ"].includes(pair))return .58;
+  if(["בו","וב","כק","קכ","כח","חכ","טת","תט","אע","עא","סז","זס"].includes(pair))return .22;
+  if(["אה","הא","או","וא","אי","יא","הי","יה","הו","וה"].includes(pair))return .30;
+  if(["סש","שס","סצ","צס"].includes(pair))return .44;
+  if(["פב","בפ"].includes(pair))return .54;
   return 1;
 }
-function hebrewDeleteCost(ch){return "אהוי".includes(ch)?.30:1;}
+function hebrewDeleteCost(ch){return "אהוי".includes(ch)?.26:1;}
 function weightedHebrewDistance(a,b){
-  a=[...normalizeFinalsForCompare(a)];b=[...normalizeFinalsForCompare(b)];
-  let prev=Array(b.length+1).fill(0);for(let j=1;j<=b.length;j++)prev[j]=prev[j-1]+hebrewDeleteCost(b[j-1]);
+  a=[...normalizeFinalsForCompare(a).replace(/\s+/g,' ')];b=[...normalizeFinalsForCompare(b).replace(/\s+/g,' ')];
+  let prev=Array(b.length+1).fill(0);for(let j=1;j<=b.length;j++)prev[j]=prev[j-1]+(b[j-1]===' '?.45:hebrewDeleteCost(b[j-1]));
   for(let i=1;i<=a.length;i++){
-    const cur=Array(b.length+1).fill(0);cur[0]=prev[0]+hebrewDeleteCost(a[i-1]);
-    for(let j=1;j<=b.length;j++)cur[j]=Math.min(prev[j]+hebrewDeleteCost(a[i-1]),cur[j-1]+hebrewDeleteCost(b[j-1]),prev[j-1]+hebrewSubstitutionCost(a[i-1],b[j-1]));
+    const cur=Array(b.length+1).fill(0);cur[0]=prev[0]+(a[i-1]===' '?.45:hebrewDeleteCost(a[i-1]));
+    for(let j=1;j<=b.length;j++){
+      const da=a[i-1]===' '?.45:hebrewDeleteCost(a[i-1]),db=b[j-1]===' '?.45:hebrewDeleteCost(b[j-1]),sub=(a[i-1]===' '||b[j-1]===' ')?(a[i-1]===b[j-1]?0:.7):hebrewSubstitutionCost(a[i-1],b[j-1]);
+      cur[j]=Math.min(prev[j]+da,cur[j-1]+db,prev[j-1]+sub);
+    }
     prev=cur;
   }
   return prev[b.length];
 }
 function hebrewSimilarity(a,b){const x=normalizeFinalsForCompare(a),y=normalizeFinalsForCompare(b),max=Math.max([...x].length,[...y].length,1);return Math.max(0,1-weightedHebrewDistance(x,y)/max);}
-function bestCrossMatch(spokenCandidates,typedCandidates){
-  let best=null;
-  for(const a of spokenCandidates)for(const b of typedCandidates){const similarity=hebrewSimilarity(a.name,b.name),rank=similarity-Math.min(.16,(a.score+b.score)*.055);if(!best||rank>best.rank)best={spoken:a,typed:b,similarity,rank};}
-  return best;
+function normalizeRawText(x){return String(x||'').normalize('NFKD').toLocaleLowerCase().replace(/\p{M}/gu,'').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();}
+function rawTextSimilarity(a,b){
+  a=[...normalizeRawText(a)];b=[...normalizeRawText(b)];if(!a.length||!b.length)return 0;
+  let p=Array(b.length+1).fill(0).map((_,i)=>i);for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return Math.max(0,1-p[b.length]/Math.max(a.length,b.length,1));
 }
-function autoMatchThreshold(name){const n=[...normalizeFinalsForCompare(name)].length;return n<=3?.81:n<=5?.76:.72;}
-function mediumMatchThreshold(name){const n=[...normalizeFinalsForCompare(name)].length;return n<=3?.68:n<=5?.64:.60;}
-function nameChoicesForTyped(spokenCandidates,typedCandidate,limit=3){
-  const scored=spokenCandidates.map(x=>({name:x.name,score:hebrewSimilarity(x.name,typedCandidate.name)-Math.min(.12,x.score*.04)})).sort((a,b)=>b.score-a.score);
-  const names=[];if(typedCandidate?.name)names.push(typedCandidate.name);for(const x of scored){if(!names.includes(x.name))names.push(x.name);if(names.length>=limit)break;}return names;
+function typedHebrewCandidates(typed,limit=48){
+  if(/[א-ת]/.test(typed)){
+    const exact=normalizeHebrewName(typed);const vars=hebrewOrthographicVariants(exact,limit).map((x,i)=>({name:x.name,score:x.score+(x.name===exact?0:.08)}));
+    return rankedUnique([{name:exact,score:0},...vars].filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
+  }
+  return generateHebrewNameCandidates(typed,limit);
 }
+function bestTypedSimilarity(name,typedCandidates){let best=0,bestTyped=null;for(const t of typedCandidates){const sim=hebrewSimilarity(name,t.name);if(sim>best){best=sim;bestTyped=t;}}return {similarity:best,typed:bestTyped};}
 
 const mic=document.getElementById("mic"), statusEl=document.getElementById("status"), resultBox=document.getElementById("resultBox");
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
 const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null,heardText="",recognitionCandidates=[];
-
-const TAP_HINT={he:'נא ללחוץ על המיקרופון כדי להקליט',en:'Tap the microphone to begin',ar:'اضغط على الميكروفون للبدء',bn:'শুরু করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风开始',nl:'Tik op de microfoon om te beginnen',fil:'I-tap ang mikropono para magsimula',fr:'Touchez le microphone pour commencer',de:'Tippe auf das Mikrofon, um zu beginnen',el:'Πατήστε το μικρόφωνο για να ξεκινήσετε',hi:'शुरू करने के लिए माइक्रोफ़ोन पर टैप करें',id:'Ketuk mikrofon untuk mulai',it:'Tocca il microfono per iniziare',ja:'マイクをタップして開始',ko:'시작하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk mula',fa:'برای شروع روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby rozpocząć',pt:'Toque no microfone para começar',ru:'Нажмите на микрофон, чтобы начать',es:'Toca el micrófono para comenzar',sw:'Gusa maikrofoni kuanza',th:'แตะไมโครโฟนเพื่อเริ่ม',tr:'Başlamak için mikrofona dokunun',uk:'Натисніть на мікروفון, щоб почати',ur:'شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để bắt đầu'};
-
+const TAP_HINT={he:'נא ללחוץ על המיקרופון כדי להקליט',en:'Tap the microphone to begin',ar:'اضغط على الميكروفون للبدء',bn:'শুরু করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风开始',nl:'Tik op de microfoon om te beginnen',fil:'I-tap ang mikropono para magsimula',fr:'Touchez le microphone pour commencer',de:'Tippe auf das Mikrofon, um zu beginnen',el:'Πατήστε το μικρόφωνο για να ξεκινήσετε',hi:'शुरू करने के लिए माइक्रोफ़ोन पर टैप करें',id:'Ketuk mikrofon untuk mulai',it:'Tocca il microfono per iniziare',ja:'マイクをタップして開始',ko:'시작하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk mula',fa:'برای شروع روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby rozpocząć',pt:'Toque no microfone para começar',ru:'Нажмите на микрофон, чтобы начать',es:'Toca el micrófono para comenzar',sw:'Gusa maikrofoni kuanza',th:'แตะไมโครโฟนเพื่อเริ่ม',tr:'Başlamak için mikrofona dokunun',uk:'Натисніть на мікрофон, щоб почати',ur:'شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để bắt đầu'};
 function setRingProgress(p){const v=Math.max(0,Math.min(1,p));mic.style.setProperty('--ring-pct',(v*100)+'%');}
 function setMicState(state){const code=sel.value||'en';mic.dataset.state=state;mic.setAttribute('aria-pressed',state==='listening'?'true':'false');mic.setAttribute('aria-label',state==='listening'?((T[code]||T.en).listening||'Recording'):(TAP_HINT[code]||TAP_HINT.en));}
 function clearStatus(){statusEl.classList.remove('error-message');statusEl.textContent='';}
-
 function recorderButtonMarkup(id,kind,label){
   const icon=kind==='play'?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 5a7 7 0 1 1-6.32 4H3l3.5-3.5L10 9H7.72A5 5 0 1 0 12 7V5z"/></svg>';
   return '<button type="button" id="'+id+'" class="recorder-tool" disabled>'+icon+'<span>'+escapeHtml(label)+'</span></button>';
@@ -1462,211 +1547,208 @@ function recorderButtonMarkup(id,kind,label){
 function ensureRecorderLayout(){
   const first=document.querySelector('.dual-inputs .required-field:first-child'),check=document.getElementById('recordCheck');if(!first||!mic||!check)return;
   let row=document.getElementById('recorderActionRow');
-  if(!row){
-    row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';
-    const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';
-    const stack=document.createElement('div');stack.className='recorder-mic-stack';stack.appendChild(mic);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);
-  }else{
-    const stack=row.querySelector('.recorder-mic-stack');if(stack&&mic.parentNode!==stack)stack.appendChild(mic);
-  }
-  /* The success line is deliberately outside the microphone stack. This keeps
-     the play/re-record controls vertically aligned with the microphone. */
-  if(check.parentNode!==first)first.appendChild(check);
-  renderRecordingTools();
+  if(!row){row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';const stack=document.createElement('div');stack.className='recorder-mic-stack';stack.appendChild(mic);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);}else{const stack=row.querySelector('.recorder-mic-stack');if(stack&&mic.parentNode!==stack)stack.appendChild(mic);}
+  if(check.parentNode!==first)first.appendChild(check);renderRecordingTools();
 }
 function renderRecordingTools(){
   const box=document.getElementById('recordingTools');if(!box)return;const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en,enabled=!!recordedAudioBlob&&!mediaRecorder;
   box.hidden=false;box.innerHTML=recorderButtonMarkup('playRecording','play',vm.listen)+recorderButtonMarkup('recordAgain','again',vm.again);
   const play=document.getElementById('playRecording'),againBtn=document.getElementById('recordAgain');play.disabled=!enabled;againBtn.disabled=!enabled;
-  play.onclick=()=>{if(recordedAudioUrl&&!play.disabled)new Audio(recordedAudioUrl).play().catch(()=>{});};
-  againBtn.onclick=()=>{if(againBtn.disabled)return;resetRecording();};
+  play.onclick=()=>{if(recordedAudioUrl&&!play.disabled)new Audio(recordedAudioUrl).play().catch(()=>{});};againBtn.onclick=()=>{if(!againBtn.disabled)resetRecording();};
 }
-function resetRecording(){
-  if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedTranscript='';recordedTranscriptEnglish='';recordedAudioSamples=null;transcriptionPromise=null;transcriptionEnglishPromise=null;recordedName='';heardText='';recognitionCandidates=[];resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);renderRecordingTools();updateDualState();clearStatus();
-}
-ensureRecorderLayout();
-
 function setSuccessCheck(el,label){el.textContent='';const clean=String(label||'').replace(/✓/g,'').trim(),mark=document.createElement('span'),text=document.createElement('span');mark.className='success-check';mark.textContent='✓';text.className='check-label';text.textContent=clean;el.appendChild(mark);el.appendChild(text);}
 function updateDualState(){
-  statusEl.classList.remove('error-message');const u=UX[sel.value]||UX.en,typedEl=document.getElementById('typedName'),typed=typedEl.value.trim(),validTyped=isValidNameInput(typed),hasRecording=!!recordedAudioBlob;
+  statusEl.classList.remove('error-message');const u=UX[sel.value]||UX.en,typedEl=document.getElementById('typedName'),typed=typedEl.value,validTyped=isValidNameInput(typed),hasRecording=!!recordedAudioBlob;
   const rc=document.getElementById('recordCheck'),tc=document.getElementById('typeCheck');rc.textContent='';tc.textContent='';if(hasRecording){setSuccessCheck(rc,u.recorded);setRingProgress(1);}if(validTyped)setSuccessCheck(tc,u.typed);
   const go=document.getElementById('discoverBtn');go.disabled=!(hasRecording&&validTyped);go.classList.toggle('ready',hasRecording&&validTyped);renderRecordingTools();
 }
-
-function speakHebrew(text){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang='he-IL';x.rate=.78;speechSynthesis.speak(x)}
+function speakHebrew(text){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang='he-IL';x.rate=.78;speechSynthesis.speak(x);}
 function renderFinalHebrew(hebrew,source){const code=sel.value||"en",t=T[code]||T.en;hebrew=applyFinalForms(hebrew);const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);const hebEl=document.getElementById("hebrew");hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById("resultAudioBtn").onclick=()=>speakHebrew(hebrew);const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();}
-function showChoices(cands){const u=UX[sel.value]||UX.en,box=document.getElementById('choices');cands=[...new Set(cands.map(applyFinalForms))].slice(0,3);box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div><div class="choice-hint">'+escapeHtml(document.getElementById('typedName').value.trim())+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';heardText='';box.hidden=true;resultBox.style.display='none';clearStatus();};}
-
-let recordedTranscript="",recordedTranscriptEnglish="",transcriptionPromise=null,transcriptionEnglishPromise=null,whisperTranscriberPromise=null,recordedAudioSamples=null;
-const WHISPER_MODEL="onnx-community/whisper-tiny";
-async function getWhisperTranscriber(){if(!whisperTranscriberPromise){whisperTranscriberPromise=import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1").then(async mod=>{if(mod.env){mod.env.allowLocalModels=false;mod.env.useBrowserCache=true;}return mod.pipeline("automatic-speech-recognition",WHISPER_MODEL);}).catch(err=>{whisperTranscriberPromise=null;throw err;});}return whisperTranscriberPromise;}
-async function blobTo16kMono(blob){const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error("AudioContext unavailable");const ctx=new Ctx();try{const buf=await ctx.decodeAudioData((await blob.arrayBuffer()).slice(0)),mono=new Float32Array(buf.length);for(let ch=0;ch<buf.numberOfChannels;ch++){const data=buf.getChannelData(ch);for(let i=0;i<buf.length;i++)mono[i]+=data[i]/buf.numberOfChannels;}const sr=buf.sampleRate,target=16000;let data=mono;if(sr!==target){const outLen=Math.max(1,Math.round(mono.length*target/sr)),out=new Float32Array(outLen),ratio=sr/target;for(let i=0;i<outLen;i++){const x=i*ratio,j=Math.floor(x),f=x-j,a=mono[Math.min(j,mono.length-1)],b=mono[Math.min(j+1,mono.length-1)];out[i]=a+(b-a)*f;}data=out;}const threshold=.004,pad=Math.round(target*.18);let first=0,last=data.length-1;while(first<data.length&&Math.abs(data[first])<threshold)first++;if(first>=data.length)throw new Error("no-speech");while(last>first&&Math.abs(data[last])<threshold)last--;first=Math.max(0,first-pad);last=Math.min(data.length-1,last+pad);return data.slice(first,last+1);}finally{try{await ctx.close()}catch(_e){}}}
-async function getRecordedAudioSamples(){if(recordedAudioSamples)return recordedAudioSamples;if(!recordedAudioBlob)return null;recordedAudioSamples=await blobTo16kMono(recordedAudioBlob);return recordedAudioSamples;}
-async function transcribeRecordedAudio(forceEnglish=false){
-  const cached=forceEnglish?recordedTranscriptEnglish:recordedTranscript;if(cached)return cached;const pending=forceEnglish?transcriptionEnglishPromise:transcriptionPromise;if(pending)return pending;if(!recordedAudioBlob)return "";
-  const task=(async()=>{try{statusEl.classList.remove('error-message');statusEl.textContent=(T[sel.value]||T.en).processing||'';const audio=await getRecordedAudioSamples(),timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("transcription-timeout")),ms))]),transcriber=await timeout(getWhisperTranscriber(),60000),opts={chunk_length_s:15,stride_length_s:2};if(forceEnglish){opts.language="en";opts.task="transcribe";}const out=await timeout(transcriber(audio,opts),60000),text=cleanRecognizedName(typeof out==='string'?out:(out&&out.text)||'');if(forceEnglish)recordedTranscriptEnglish=text;else recordedTranscript=text;return text;}catch(err){console.warn('Local transcription failed',err);return "";}finally{if(forceEnglish)transcriptionEnglishPromise=null;else transcriptionPromise=null;}})();
-  if(forceEnglish)transcriptionEnglishPromise=task;else transcriptionPromise=task;return task;
+function showChoices(cands){
+  const u=UX[sel.value]||UX.en,box=document.getElementById('choices');cands=[...new Set(cands.map(applyFinalForms).filter(isPlausibleHebrewCandidate))].slice(0,3);
+  if(!cands.length){box.hidden=true;return;}
+  box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
+  box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';heardText='';box.hidden=true;resultBox.style.display='none';clearStatus();};
 }
-function voiceCandidatesFromHypotheses(hypotheses,limit=64){
+
+let recordedTranscriptHebrew="",recordedTranscriptAuto="",recordedTranscriptEnglish="",transcriptionHebrewPromise=null,transcriptionAutoPromise=null,transcriptionEnglishPromise=null,whisperTranscriberPromise=null,recordedAudioSamples=null;
+const WHISPER_MODELS=["onnx-community/whisper-base","onnx-community/whisper-tiny"];
+async function getWhisperTranscriber(){
+  if(!whisperTranscriberPromise){
+    whisperTranscriberPromise=import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1").then(async mod=>{
+      if(mod.env){mod.env.allowLocalModels=false;mod.env.useBrowserCache=true;}
+      let lastErr=null;for(const model of WHISPER_MODELS){try{return await mod.pipeline("automatic-speech-recognition",model);}catch(e){lastErr=e;console.warn('Whisper model fallback',model,e);}}
+      throw lastErr||new Error('whisper-unavailable');
+    }).catch(err=>{whisperTranscriberPromise=null;throw err;});
+  }
+  return whisperTranscriberPromise;
+}
+async function blobTo16kMono(blob){const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error("AudioContext unavailable");const ctx=new Ctx();try{const buf=await ctx.decodeAudioData((await blob.arrayBuffer()).slice(0)),mono=new Float32Array(buf.length);for(let ch=0;ch<buf.numberOfChannels;ch++){const data=buf.getChannelData(ch);for(let i=0;i<buf.length;i++)mono[i]+=data[i]/buf.numberOfChannels;}const sr=buf.sampleRate,target=16000;let data=mono;if(sr!==target){const outLen=Math.max(1,Math.round(mono.length*target/sr)),out=new Float32Array(outLen),ratio=sr/target;for(let i=0;i<outLen;i++){const x=i*ratio,j=Math.floor(x),f=x-j,a=mono[Math.min(j,mono.length-1)],b=mono[Math.min(j+1,mono.length-1)];out[i]=a+(b-a)*f;}data=out;}const threshold=.0035,pad=Math.round(target*.20);let first=0,last=data.length-1;while(first<data.length&&Math.abs(data[first])<threshold)first++;if(first>=data.length)throw new Error("no-speech");while(last>first&&Math.abs(data[last])<threshold)last--;first=Math.max(0,first-pad);last=Math.min(data.length-1,last+pad);return data.slice(first,last+1);}finally{try{await ctx.close()}catch(_e){}}}
+async function getRecordedAudioSamples(){if(recordedAudioSamples)return recordedAudioSamples;if(!recordedAudioBlob)return null;recordedAudioSamples=await blobTo16kMono(recordedAudioBlob);return recordedAudioSamples;}
+async function transcribeRecordedAudio(mode='he'){
+  const cache={he:recordedTranscriptHebrew,auto:recordedTranscriptAuto,en:recordedTranscriptEnglish}[mode];if(cache)return cache;
+  const pending={he:transcriptionHebrewPromise,auto:transcriptionAutoPromise,en:transcriptionEnglishPromise}[mode];if(pending)return pending;if(!recordedAudioBlob)return "";
+  const task=(async()=>{try{
+    statusEl.classList.remove('error-message');statusEl.textContent=(T[sel.value]||T.en).processing||'';
+    const audio=await getRecordedAudioSamples(),timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("transcription-timeout")),ms))]),transcriber=await timeout(getWhisperTranscriber(),90000),opts={chunk_length_s:15,stride_length_s:2,task:'transcribe'};
+    if(mode==='he')opts.language='he';if(mode==='en')opts.language='en';
+    const out=await timeout(transcriber(audio,opts),90000),txt=cleanRecognizedName(typeof out==='string'?out:(out&&out.text)||'');
+    if(mode==='he')recordedTranscriptHebrew=txt;else if(mode==='en')recordedTranscriptEnglish=txt;else recordedTranscriptAuto=txt;return txt;
+  }catch(err){console.warn('Local transcription failed',mode,err);return "";}finally{if(mode==='he')transcriptionHebrewPromise=null;else if(mode==='en')transcriptionEnglishPromise=null;else transcriptionAutoPromise=null;}})();
+  if(mode==='he')transcriptionHebrewPromise=task;else if(mode==='en')transcriptionEnglishPromise=task;else transcriptionAutoPromise=task;return task;
+}
+function voiceCandidatesFromHypotheses(hypotheses,limit=72){
   const buckets=new Map();
   for(const h of hypotheses){
-    const text=cleanRecognizedName(h&&h.text);if(!text)continue;
-    const sourcePenalty=Number.isFinite(h.penalty)?h.penalty:0;
-    const source=String(h.source||'audio');
-    for(const c of generateHebrewNameCandidates(text,64)){
-      const baseScore=c.score+sourcePenalty-hebrewNamePriorBonus(c.name);
-      let b=buckets.get(c.name);
-      if(!b){b={name:c.name,bestScore:baseScore,sources:new Set([source]),raw:[{source,text,score:c.score}]};buckets.set(c.name,b);}
-      else{b.bestScore=Math.min(b.bestScore,baseScore);b.sources.add(source);b.raw.push({source,text,score:c.score});}
+    const text=cleanRecognizedName(h&&h.text);if(!text)continue;const sourcePenalty=Number.isFinite(h.penalty)?h.penalty:0,source=String(h.source||'audio');
+    for(const c of generateHebrewNameCandidates(text,72)){
+      if(!isPlausibleHebrewCandidate(c.name))continue;
+      let baseScore=c.score+sourcePenalty-hebrewNamePriorBonus(c.name);
+      if(source.includes('hebrew'))baseScore-=.08;
+      let b=buckets.get(c.name);if(!b){b={name:c.name,bestScore:baseScore,sources:new Set([source]),raw:[{source,text,score:c.score}]};buckets.set(c.name,b);}else{b.bestScore=Math.min(b.bestScore,baseScore);b.sources.add(source);b.raw.push({source,text,score:c.score});}
     }
   }
-  const out=[];
-  for(const b of buckets.values()){
-    const consensus=Math.min(.14,Math.max(0,b.sources.size-1)*.07);
-    out.push({name:b.name,score:b.bestScore-consensus,sources:[...b.sources],raw:b.raw});
-  }
+  const out=[];for(const b of buckets.values()){const consensus=Math.min(.18,Math.max(0,b.sources.size-1)*.075);out.push({name:b.name,score:b.bestScore-consensus,sources:[...b.sources],raw:b.raw});}
   return out.sort((a,b)=>a.score-b.score||b.sources.length-a.sources.length).slice(0,limit);
 }
-function bestTypedSimilarity(name,typedCandidates){
-  let best=0,bestTyped=null;for(const t of typedCandidates){const sim=hebrewSimilarity(name,t.name);if(sim>best){best=sim;bestTyped=t;}}
-  return {similarity:best,typed:bestTyped};
-}
-function resolveVoiceFirst(spokenCandidates,typedCandidates){
-  if(!spokenCandidates.length||!typedCandidates.length)return {kind:'mismatch'};
-  const top=spokenCandidates[0],topMatch=bestTypedSimilarity(top.name,typedCandidates),topThreshold=autoMatchThreshold(topMatch.typed?.name||top.name),medium=mediumMatchThreshold(topMatch.typed?.name||top.name);
-  /* The recording owns the candidate set. Typing may resolve an orthographic
-     ambiguity only when that exact spelling was independently generated from
-     the audio. A known-name prior gets a wider (still bounded) acoustic window. */
-  let exactTyped=null;
-  for(const t of typedCandidates){const hit=spokenCandidates.find(c=>c.name===t.name);if(!hit)continue;const known=COMMON_HEBREW_NAMES.has(t.name),maxDelta=known?.32:.12;if(hit.score<=top.score+maxDelta){if(!exactTyped||hit.score<exactTyped.hit.score)exactTyped={hit,t,known};}}
-  if(exactTyped)return {kind:'result',name:exactTyped.hit.name,confidence:exactTyped.known?'typed-known-audio-candidate':'typed-near-tie',similarity:1};
-  if(topMatch.similarity>=topThreshold)return {kind:'result',name:top.name,confidence:'high',similarity:topMatch.similarity};
+function resolveVoiceFirst(spokenCandidates,typedCandidates,typedRaw='',rawHypotheses=[]){
+  spokenCandidates=spokenCandidates.filter(x=>isPlausibleHebrewCandidate(x.name));if(!spokenCandidates.length)return {kind:'mismatch'};
+  const top=spokenCandidates[0];
+  let rawConfirmation=0;for(const h of rawHypotheses)rawConfirmation=Math.max(rawConfirmation,rawTextSimilarity(typedRaw,h.text));
+  const topTyped=typedCandidates.length?bestTypedSimilarity(top.name,typedCandidates):{similarity:0};
+  /* Voice owns the spelling. Typing may resolve only a genuine acoustic near-tie.
+     This lets דני resolve דאני/דני, while a clear מאיר is not overridden by מהיר. */
+  const typedExact=/^[א-ת׳ ]+$/.test(String(typedRaw||''))?normalizeHebrewName(typedRaw):'';
+  if(typedExact){
+    const hit=spokenCandidates.find(c=>c.name===typedExact),fallbackOnly=top.sources?.every(s=>s==='english-fallback'||s==='auto-secondary'),tieWindow=fallbackOnly?.30:.13;
+    if(hit&&hit.score<=top.score+tieWindow&&hebrewSimilarity(top.name,typedExact)>=.68)return {kind:'result',name:hit.name,confidence:fallbackOnly?'typed-resolves-fallback':'exact-typed-acoustic-near-tie',similarity:1};
+  }
+  if(topTyped.similarity>=.70)return {kind:'result',name:top.name,confidence:'voice+typed',similarity:topTyped.similarity};
+  if(!typedCandidates.length&&rawConfirmation>=.72)return {kind:'result',name:top.name,confidence:'voice+source-script',similarity:rawConfirmation};
   let bestAlt=null;
-  for(const c of spokenCandidates.slice(1,14)){
-    const m=bestTypedSimilarity(c.name,typedCandidates),threshold=autoMatchThreshold(m.typed?.name||c.name);
-    if(m.similarity>=threshold&&c.score<=top.score+.12){
-      const merit=m.similarity-(c.score-top.score)*.45;if(!bestAlt||merit>bestAlt.merit)bestAlt={c,m,merit};
+  if(typedCandidates.length){
+    for(const c of spokenCandidates.slice(1,16)){
+      const m=bestTypedSimilarity(c.name,typedCandidates),delta=c.score-top.score;
+      if(m.similarity>=.84&&delta<=.10){const merit=m.similarity-delta*.55;if(!bestAlt||merit>bestAlt.merit)bestAlt={c,m,merit};}
     }
   }
-  if(bestAlt)return {kind:'result',name:bestAlt.c.name,confidence:'near-tie',similarity:bestAlt.m.similarity};
-  const mediumCandidates=spokenCandidates.slice(0,12).map(c=>{const m=bestTypedSimilarity(c.name,typedCandidates);return {name:c.name,voiceScore:c.score,similarity:m.similarity,merit:m.similarity-Math.max(0,c.score-top.score)*.35};}).filter(x=>x.similarity>=medium).sort((a,b)=>b.merit-a.merit||a.voiceScore-b.voiceScore);
-  if(mediumCandidates.length)return {kind:'choices',names:[...new Set([top.name,...mediumCandidates.map(x=>x.name)])].slice(0,3)};
+  if(bestAlt)return {kind:'result',name:bestAlt.c.name,confidence:'typed-breaks-acoustic-tie',similarity:bestAlt.m.similarity};
+  const medium=spokenCandidates.slice(0,10).map(c=>{const m=typedCandidates.length?bestTypedSimilarity(c.name,typedCandidates):{similarity:rawConfirmation};return {name:c.name,voiceScore:c.score,similarity:m.similarity,merit:m.similarity-Math.max(0,c.score-top.score)*.40};}).filter(x=>x.similarity>=.54).sort((a,b)=>b.merit-a.merit||a.voiceScore-b.voiceScore);
+  if(medium.length)return {kind:'choices',names:[...new Set([top.name,...medium.map(x=>x.name)])].filter(isPlausibleHebrewCandidate).slice(0,3)};
   return {kind:'mismatch'};
 }
 async function reconcileName(){
-  const typed=document.getElementById('typedName').value.trim();if(!recordedAudioBlob||!isValidNameInput(typed))return;clearStatus();const btn=document.getElementById('discoverBtn');btn.disabled=true;
-  const typedIsHebrew=/[א-ת]/.test(typed),typedExact=typedIsHebrew?normalizeHebrewName(typed):'',typedCandidates=typedIsHebrew?[{name:typedExact,score:0}]:generateHebrewNameCandidates(typed,48);
-  if(!typedCandidates.length){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).cantWrite;updateDualState();return;}
-  /* Two independent decodes of the SAME recorded blob are always used. The
-     English decode is valuable for names because it often preserves phonetics
-     (Meir/Avi/Daniela) instead of prematurely choosing a Hebrew word spelling. */
-  const primary=await transcribeRecordedAudio(false);
-  if(!primary){resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');statusEl.textContent=(sel.value==='he'?'לא ניתן היה לנתח את ההקלטה. נא לבצע הקלטה מחדש.':(T[sel.value]||T.en).noName);updateDualState();return;}
-  const english=await transcribeRecordedAudio(true);
-  recordedName=primary;heardText=primary;
-  const hypotheses=[{text:primary,source:'auto',penalty:0}];
-  if(english&&english.toLowerCase()!==primary.toLowerCase())hypotheses.push({text:english,source:'english-phonetic',penalty:.015});
-  let spokenCandidates=voiceCandidatesFromHypotheses(hypotheses,64),decision=resolveVoiceFirst(spokenCandidates,typedCandidates);
-  if(decision.kind==='result'){renderFinalHebrew(decision.name,'voice-first-crosscheck');updateDualState();return;}
+  const typedEl=document.getElementById('typedName'),typed=typedEl.value;if(!recordedAudioBlob||!isValidNameInput(typed))return;clearStatus();const btn=document.getElementById('discoverBtn');btn.disabled=true;
+  const typedCandidates=typedHebrewCandidates(typed,56),browserHyp=recognitionCandidates.map((x,i)=>({text:x.text,source:'browser-hebrew',penalty:.015+i*.01}));
+  /* Pass 1: direct Hebrew decoding from the raw audio. */
+  const hebrew=await transcribeRecordedAudio('he');
+  const hyps=[...browserHyp];if(hebrew)hyps.unshift({text:hebrew,source:'whisper-hebrew',penalty:0});
+  let spoken=voiceCandidatesFromHypotheses(hyps,72),decision=resolveVoiceFirst(spoken,typedCandidates,typed,[]);
+  if(decision.kind==='result'&&decision.similarity>=.78){recordedName=hebrew||heardText;renderFinalHebrew(decision.name,'hebrew-audio-first');updateDualState();return;}
+  /* Pass 2: auto-language transcript is used only as supporting evidence and
+     for source-script confirmation. It does NOT become the target alphabet. */
+  const auto=await transcribeRecordedAudio('auto');const rawHyps=[];if(auto){rawHyps.push({text:auto,source:'auto-source'});hyps.push({text:auto,source:'auto-secondary',penalty:.10});}
+  spoken=voiceCandidatesFromHypotheses(hyps,72);decision=resolveVoiceFirst(spoken,typedCandidates,typed,rawHyps);
+  if(decision.kind==='result'){recordedName=hebrew||auto||heardText;renderFinalHebrew(decision.name,'hebrew-first-crosscheck');updateDualState();return;}
+  /* Pass 3: English/Latin is a LAST fallback only, never the primary decoding
+     space. This path helps names that Whisper preserves phonetically in Latin. */
+  const english=await transcribeRecordedAudio('en');if(english)hyps.push({text:english,source:'english-fallback',penalty:.16});
+  spoken=voiceCandidatesFromHypotheses(hyps,72);decision=resolveVoiceFirst(spoken,typedCandidates,typed,rawHyps);
+  if(decision.kind==='result'){recordedName=hebrew||auto||english||heardText;renderFinalHebrew(decision.name,'hebrew-first-fallback');updateDualState();return;}
   if(decision.kind==='choices'){showChoices(decision.names);updateDualState();return;}
   resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;updateDualState();
 }
 
-/* Deterministic release-12 QA: these test the FINAL decision, not merely whether
-   a candidate exists somewhere in the list. */
-window.__nameEngineV12SelfTest=function(){
+window.__nameEngineNextSelfTest=function(){
   const cases=[
-    {h:[['Meir','auto'],['Meir','english-phonetic']],typed:'מאיר',expected:'מאיר'},
-    {h:[['מהיר','auto'],['Meir','english-phonetic']],typed:'מהיר',expected:'מאיר'},
-    {h:[['Mair','auto'],['Mair','english-phonetic']],typed:'מאיר',expected:'מאיר'},
-    {h:[['Avi','auto'],['Avi','english-phonetic']],typed:'אבי',expected:'אבי'},
-    {h:[['Daniela','auto'],['Daniela','english-phonetic']],typed:'דניאלה',expected:'דניאלה'},
-    {h:[['Yon','auto'],['Yon','english-phonetic']],typed:'יון',expected:'יון'},
-    {h:[['Ron','auto'],['Ron','english-phonetic']],typed:'רון',expected:'רון'},
-    {h:[['Moshe','auto'],['Moshe','english-phonetic']],typed:'משה',expected:'משה'},
-    {h:[['David','auto'],['David','english-phonetic']],typed:'דוד',expected:'דוד'},
-    {h:[['Yael','auto'],['Yael','english-phonetic']],typed:'יעל',expected:'יעל'},
-    {h:[['Noam','auto'],['Noam','english-phonetic']],typed:'נועם',expected:'נועם'},
-    {h:[['Miriam','auto'],['Miriam','english-phonetic']],typed:'מרים',expected:'מרים'},
-    {h:[['Sarah','auto'],['Sarah','english-phonetic']],typed:'שרה',expected:'שרה'},
-    {h:[['Moshe','auto'],['Moshe','english-phonetic']],typed:'מאיר',expected:null}
+    {h:[['דני','whisper-hebrew']],typed:'דני',expected:'דני'},
+    {h:[['דאני','whisper-hebrew'],['Dani','english-fallback']],typed:'דני',expected:'דני'},
+    {h:[['מאיר','whisper-hebrew']],typed:'מאיר',expected:'מאיר'},
+    {h:[['מהיר','whisper-hebrew'],['Meir','english-fallback']],typed:'מאיר',expected:'מאיר'},
+    {h:[['מאיר','whisper-hebrew'],['Meir','english-fallback']],typed:'מהיר',expected:'מאיר'},
+    {h:[['מוזס','whisper-hebrew']],typed:'מוזז',expected:'מוזס'},
+    {h:[['Moses','english-fallback']],typed:'מוזז',expected:'מוזס'},
+    {h:[['אבי','whisper-hebrew']],typed:'אבי',expected:'אבי'},
+    {h:[['דניאלה','whisper-hebrew']],typed:'דניאלה',expected:'דניאלה'},
+    {h:[['בן אל','whisper-hebrew']],typed:'בן אל',expected:'בן אל'},
+    {h:[['מוחמד','whisper-hebrew']],typed:'محمد',raw:[{text:'محمد'}],expected:'מוחמד'},
+    {h:[['מחמאד','whisper-hebrew']],typed:'محمد',raw:[{text:'محمد'}],expected:'מחמאד'},
+    {h:[['משה','whisper-hebrew']],typed:'מאיר',expected:null},
+    {h:[['ם','whisper-hebrew']],typed:'מאיר',expected:null}
   ];
-  return cases.map(x=>{const spoken=voiceCandidatesFromHypotheses(x.h.map(([text,source])=>({text,source,penalty:source==='auto'?0:.015})),64),typed=[{name:normalizeHebrewName(x.typed),score:0}],d=resolveVoiceFirst(spoken,typed),actual=d.kind==='result'?d.name:null;return {heard:x.h.map(a=>a[0]),typed:x.typed,expected:x.expected,actual,pass:actual===x.expected,top:spoken.slice(0,5).map(c=>c.name)};});
+  return cases.map(x=>{const hs=x.h.map(([text,source])=>({text,source,penalty:source==='whisper-hebrew'?0:.16})),spoken=voiceCandidatesFromHypotheses(hs,72),typed=typedHebrewCandidates(x.typed,56),d=resolveVoiceFirst(spoken,typed,x.typed,x.raw||[]),actual=d.kind==='result'?d.name:null;return {heard:x.h.map(a=>a[0]),typed:x.typed,expected:x.expected,actual,kind:d.kind,pass:actual===x.expected,top:spoken.slice(0,6).map(c=>c.name)};});
+};
+window.__inputNextSelfTest=function(){
+  const cases=[
+    ['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],['ג\'ורג\'','ג\'ורג\'',true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]
+  ];
+  return cases.map(([raw,clean,valid])=>{const got=sanitizeNameInput(raw);return {raw,expectedClean:clean,actualClean:got,expectedValid:valid,actualValid:isValidNameInput(got),pass:got===clean&&isValidNameInput(got)===valid};});
 };
 
+/* ---------- Recording: fast VAD + one-second silence auto-stop ---------- */
+let vadCtx=null,vadAnalyser=null,vadSource=null,vadTimer=null,vadSpeechSeen=false,vadSpeechStartedAt=0,vadLastVoiceAt=0,vadNoiseFloor=.006,vadVoiceFrames=0;
+let recRecording=false,recStarting=false,recStartedAt=0,recPressAt=0,recReleaseDuration=null,recStopTimer=null,recRingRaf=null,recPointerId=null,recPointerHeld=false;
+function stopVoiceActivityMonitor(){if(vadTimer){clearInterval(vadTimer);vadTimer=null;}try{vadSource?.disconnect()}catch(_e){}try{vadAnalyser?.disconnect()}catch(_e){}if(vadCtx){try{vadCtx.close()}catch(_e){}}vadCtx=null;vadAnalyser=null;vadSource=null;}
+function startVoiceActivityMonitor(stream){
+  stopVoiceActivityMonitor();const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;try{vadCtx=new Ctx();vadAnalyser=vadCtx.createAnalyser();vadAnalyser.fftSize=1024;vadSource=vadCtx.createMediaStreamSource(stream);vadSource.connect(vadAnalyser);const data=new Float32Array(vadAnalyser.fftSize);vadSpeechSeen=false;vadSpeechStartedAt=0;vadLastVoiceAt=0;vadNoiseFloor=.006;vadVoiceFrames=0;
+    vadTimer=setInterval(()=>{if(!recRecording||!vadAnalyser)return;vadAnalyser.getFloatTimeDomainData(data);let sum=0;for(const v of data)sum+=v*v;const rms=Math.sqrt(sum/data.length),elapsed=performance.now()-recStartedAt,threshold=Math.max(.012,vadNoiseFloor*2.8+.0035),voice=rms>threshold;
+      /* Learn the room only from frames that are already below the speech threshold.
+         This prevents a user who speaks immediately from being learned as noise. */
+      if(!vadSpeechSeen&&elapsed<500&&!voice)vadNoiseFloor=vadNoiseFloor*.82+rms*.18;
+      if(voice){vadVoiceFrames++;if(vadVoiceFrames>=2){if(!vadSpeechSeen){vadSpeechSeen=true;vadSpeechStartedAt=performance.now();}vadLastVoiceAt=performance.now();}}else vadVoiceFrames=Math.max(0,vadVoiceFrames-1);
+      if(vadSpeechSeen&&performance.now()-vadLastVoiceAt>=1000&&performance.now()-vadSpeechStartedAt>=280){finishRecording('silence');return;}
+      if(!recPointerHeld&&!vadSpeechSeen&&elapsed>=8000){finishRecording('timeout');return;}
+      if(!recPointerHeld&&vadSpeechSeen&&elapsed>=12000){finishRecording('timeout');return;}
+    },50);
+  }catch(_e){stopVoiceActivityMonitor();}
+}
+function stopRingAnimation(){if(recRingRaf){cancelAnimationFrame(recRingRaf);recRingRaf=null;}}
+function animateRing(){stopRingAnimation();const tick=()=>{if(!recRecording)return;setRingProgress(Math.min(.96,(performance.now()-recStartedAt)/8000));recRingRaf=requestAnimationFrame(tick);};recRingRaf=requestAnimationFrame(tick);}
+function createRecognition(){
+  if(!SpeechRecognition)return null;const r=new SpeechRecognition();r.lang='he-IL';r.continuous=true;r.interimResults=true;r.maxAlternatives=5;
+  r.onresult=ev=>{let primary='';const fresh=[];for(let i=ev.resultIndex;i<ev.results.length;i++){const res=ev.results[i];if(!res)continue;if(res[0]?.transcript)primary+=(primary?' ':'')+res[0].transcript;for(let j=0;j<Math.min(res.length,5);j++){const alt=res[j];if(alt?.transcript)fresh.push({text:alt.transcript.trim(),confidence:Number.isFinite(alt.confidence)?alt.confidence:0});}}if(primary.trim())heardText=primary.trim();if(fresh.length){const merged=[...recognitionCandidates,...fresh],seen=new Set();recognitionCandidates=merged.filter(x=>{const k=String(x.text||'').toLowerCase().trim();if(!k||seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>b.confidence-a.confidence).slice(0,12);}};
+  r.onerror=()=>{};r.onend=()=>{if(recRecording){try{r.start();return;}catch(_e){}}recognition=null;};return r;
+}
+function startSpeech(){if(recognition||!SpeechRecognition)return;heardText='';recognitionCandidates=[];recognition=createRecognition();try{recognition.start()}catch(_e){recognition=null;}}
+function stopSpeech(){if(!recognition)return;const r=recognition;recognition=null;try{r.stop()}catch(_e){}setTimeout(()=>{try{r.abort()}catch(_e){}},600);}
 async function startAudioCapture(){
   try{
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
-    mediaStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);
+    mediaStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);
     mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};
     mediaRecorder.onstop=()=>{
       if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
-      const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioSamples=null;recordedTranscript='';recordedTranscriptEnglish='';transcriptionPromise=null;transcriptionEnglishPromise=null;
+      const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioSamples=null;recordedTranscriptHebrew='';recordedTranscriptAuto='';recordedTranscriptEnglish='';transcriptionHebrewPromise=null;transcriptionAutoPromise=null;transcriptionEnglishPromise=null;
       if(blob.size>0){recordedAudioBlob=blob;recordedAudioUrl=URL.createObjectURL(blob);}else{recordedAudioBlob=null;recordedAudioUrl=null;}
       mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;mediaRecorder=null;renderRecordingTools();updateDualState();requestAnimationFrame(updateDualState);
     };
-    mediaRecorder.start(250);return true;
-  }catch(e){
-    mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;const x=T[sel.value]||T.en;statusEl.classList.add('error-message');statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);renderRecordingTools();return false;
-  }
+    mediaRecorder.start(200);return true;
+  }catch(e){mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;const x=T[sel.value]||T.en;statusEl.classList.add('error-message');statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);renderRecordingTools();return false;}
 }
 function stopAudioCapture(){if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}}
-function showRecordingTools(){renderRecordingTools();}
-
-function createRecognition(){
-  if(!SpeechRecognition)return null;const r=new SpeechRecognition();
-  /* UI language is intentionally not used as the speech language. Browser/device locale is the neutral hint. */
-  r.lang=(navigator.language||navigator.userLanguage||'en-US');r.continuous=true;r.interimResults=true;r.maxAlternatives=3;
-  r.onresult=ev=>{
-    let primary='';const fresh=[];
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const res=ev.results[i];if(!res)continue;
-      if(res[0]&&res[0].transcript)primary+=(primary?' ':'')+res[0].transcript;
-      for(let j=0;j<Math.min(res.length,3);j++){const alt=res[j];if(alt&&alt.transcript)fresh.push({text:alt.transcript.trim(),confidence:Number.isFinite(alt.confidence)?alt.confidence:0});}
-    }
-    if(primary.trim())heardText=primary.trim();
-    if(fresh.length){const merged=[...recognitionCandidates,...fresh],seen=new Set();recognitionCandidates=merged.filter(x=>{const k=String(x.text||'').toLowerCase().trim();if(!k||seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>b.confidence-a.confidence).slice(0,8);}
-  };
-  r.onerror=()=>{/* A recognition error does not invalidate a successful MediaRecorder recording. */};
-  r.onend=()=>{recognition=null;const finalHeard=cleanRecognizedName(heardText.trim());if(finalHeard)recordedName=finalHeard;updateDualState();};
-  return r;
+function finishRecording(reason='manual'){
+  if(!recRecording)return;recRecording=false;recStarting=false;if(recStopTimer){clearTimeout(recStopTimer);recStopTimer=null;}stopRingAnimation();stopVoiceActivityMonitor();stopSpeech();setRingProgress(1);mic.classList.remove('listening');setMicState('ready');stopAudioCapture();
 }
-function startSpeech(){if(recognition||!SpeechRecognition)return;heardText='';recognitionCandidates=[];recognition=createRecognition();try{recognition.start()}catch(_e){recognition=null;}}
-function stopSpeech(){if(!recognition){setMicState('ready');return;}const r=recognition;try{r.stop()}catch(_e){}setTimeout(()=>{if(recognition===r){try{r.abort()}catch(_e){}recognition=null;}},2000);setMicState('ready');}
-
-/* Release 11 recording behavior:
-   - Press starts recording immediately.
-   - Release before 1 second = a short activation tap; recording continues automatically to 8 seconds total.
-   - Hold for 1 second or longer = recording ends on release.
-   - Holding beyond 8 seconds continues until release. */
-let v11Recording=false,v11Starting=false,v11StartedAt=0,v11PressAt=0,v11ReleaseDuration=null,v11StopTimer=null,v11RingRaf=null,v11PointerId=null;
-function stopRingAnimation(){if(v11RingRaf){cancelAnimationFrame(v11RingRaf);v11RingRaf=null;}}
-function animateRing(){stopRingAnimation();const tick=()=>{if(!v11Recording)return;setRingProgress(Math.min(1,(performance.now()-v11StartedAt)/8000));v11RingRaf=requestAnimationFrame(tick);};v11RingRaf=requestAnimationFrame(tick);}
-function finishV11Recording(){if(!v11Recording)return;v11Recording=false;v11Starting=false;if(v11StopTimer){clearTimeout(v11StopTimer);v11StopTimer=null;}stopRingAnimation();mic.classList.remove('listening');setMicState('ready');stopAudioCapture();}
-function scheduleShortTapFinish(){if(!v11Recording)return;const remaining=Math.max(0,8000-(performance.now()-v11StartedAt));if(v11StopTimer)clearTimeout(v11StopTimer);v11StopTimer=setTimeout(finishV11Recording,remaining);}
-async function beginV11Recording(e){
-  if(v11Recording||v11Starting)return;e?.preventDefault?.();v11Starting=true;v11PressAt=performance.now();v11ReleaseDuration=null;v11PointerId=e?.pointerId??null;if(v11PointerId!==null){try{mic.setPointerCapture(v11PointerId)}catch(_e){}}
+async function beginRecording(e){
+  if(recRecording||recStarting)return;e?.preventDefault?.();recStarting=true;recPointerHeld=true;recPressAt=performance.now();recReleaseDuration=null;recPointerId=e?.pointerId??null;if(recPointerId!==null){try{mic.setPointerCapture(recPointerId)}catch(_e){}}
   resetRecording();resultBox.style.display='none';document.getElementById('choices').hidden=true;clearStatus();setRingProgress(0);renderRecordingTools();
-  const audioOk=await startAudioCapture();if(!audioOk){v11Starting=false;setRingProgress(0);return;}
-  v11Starting=false;v11Recording=true;v11StartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();getWhisperTranscriber().catch(()=>{});
-  if(v11ReleaseDuration!==null){if(v11ReleaseDuration<1000)scheduleShortTapFinish();else setTimeout(finishV11Recording,40);}
+  const ok=await startAudioCapture();if(!ok){recStarting=false;recPointerHeld=false;setRingProgress(0);return;}
+  recStarting=false;recRecording=true;recStartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();startSpeech();startVoiceActivityMonitor(mediaStream);setTimeout(()=>getWhisperTranscriber().catch(()=>{}),0);
+  if(recReleaseDuration!==null){if(recReleaseDuration>=1000)setTimeout(()=>finishRecording('release'),30);}
 }
-function releaseV11Recording(e){
-  if(v11PointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==v11PointerId)return;e?.preventDefault?.();const duration=Math.max(0,performance.now()-v11PressAt);v11ReleaseDuration=duration;if(v11Starting)return;if(!v11Recording)return;if(duration<1000)scheduleShortTapFinish();else finishV11Recording();
+function releaseRecording(e){
+  if(recPointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==recPointerId)return;e?.preventDefault?.();recPointerHeld=false;const duration=Math.max(0,performance.now()-recPressAt);recReleaseDuration=duration;if(recStarting||!recRecording)return;if(duration>=1000)finishRecording('release');
 }
-mic.addEventListener('pointerdown',beginV11Recording);
-mic.addEventListener('pointerup',releaseV11Recording);
-mic.addEventListener('pointercancel',releaseV11Recording);
-mic.addEventListener('lostpointercapture',e=>{if(v11Recording||v11Starting)releaseV11Recording(e);});
-mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
-
-again.onclick=()=>{resultBox.style.display="none";document.getElementById('choices').hidden=true;heardText="";clearStatus();setMicState("ready");};
-
-
-document.getElementById("typedName").addEventListener("input",e=>{const clean=sanitizeNameInput(e.target.value);if(clean!==e.target.value)e.target.value=clean;clearStatus();updateDualState();});
-document.getElementById("typedName").setAttribute("maxlength","60");
-document.getElementById("discoverBtn").addEventListener("click",()=>{reconcileName().catch(()=>{updateDualState();});});
+function resetRecording(){
+  if(recRecording)finishRecording('reset');stopVoiceActivityMonitor();stopSpeech();if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedTranscriptHebrew='';recordedTranscriptAuto='';recordedTranscriptEnglish='';recordedAudioSamples=null;transcriptionHebrewPromise=null;transcriptionAutoPromise=null;transcriptionEnglishPromise=null;recordedName='';heardText='';recognitionCandidates=[];resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);renderRecordingTools();updateDualState();clearStatus();
+}
+ensureRecorderLayout();
+mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',e=>{if(recRecording||recStarting)releaseRecording(e);});mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
+const againMain=document.getElementById('again');if(againMain)againMain.onclick=()=>resetRecording();
+const typedInput=document.getElementById("typedName");typedInput.addEventListener("input",e=>{const clean=sanitizeNameInput(e.target.value);if(clean!==e.target.value){const end=clean.length;e.target.value=clean;try{e.target.setSelectionRange(end,end)}catch(_e){}}clearStatus();updateDualState();});typedInput.setAttribute("maxlength","60");
+document.getElementById("discoverBtn").addEventListener("click",()=>{reconcileName().catch(err=>{console.warn(err);updateDualState();});});
 render(detectLang());
+if('requestIdleCallback'in window)requestIdleCallback(()=>getWhisperTranscriber().catch(()=>{}),{timeout:2500});else setTimeout(()=>getWhisperTranscriber().catch(()=>{}),1400);
 
 </script>
 
