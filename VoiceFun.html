@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- Official release: Version 25 — clean sound-first engine and single-pass recording -->
+<!-- Official release: Version 29 — direct OpenAI audio analysis -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ThePowerOfHebrew — My Name in Hebrew — v27</title>
@@ -1299,12 +1299,13 @@ function isPlausibleHebrewCandidate(name){
   return n.split(/\s+/).every(w=>[...w].filter(c=>/[א-ת]/.test(c)).length>=2);
 }
 
-/* Version 27 — recording core only.
+/* Version 29 — recording core only.
    Tap once -> speak -> automatic stop after ~1s silence (8s hard maximum)
-   -> one private acoustic transcription -> Hebrew sound candidates.
-   No typed input and no cross-check in this version. */
-const V28_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
-const V28_API_ENDPOINT=V28_API_BASE+'/api/name-candidates';
+   -> OpenAI audio model listens directly -> Hebrew sound candidates.
+   No typed input, no cross-check, no browser speech recognition and no Whisper pass. */
+const V29_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
+const V29_API_ENDPOINT=V29_API_BASE+'/api/name-candidates';
+const V29_SPEAK_ENDPOINT=V29_API_BASE+'/api/speak';
 const mic=document.getElementById('mic'),statusEl=document.getElementById('status'),resultBox=document.getElementById('resultBox');
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
 let recordState='idle',recordStartedAt=0,recordMaxTimer=null,ringRaf=null,pointerId=null,processAfterStop=true;
@@ -1366,15 +1367,24 @@ function updateDualState(){
   renderRecordingTools();
 }
 
-function preferredHebrewVoice(){
-  if(!('speechSynthesis'in window))return null;const vs=(speechSynthesis.getVoices?.()||[]).filter(v=>/^he(?:-|$)/i.test(v.lang||''));if(!vs.length)return null;
-  const score=v=>{const n=(v.name||'').toLowerCase();let s=0;if(/hila|הילה/.test(n))s+=100;if(/female|woman|zira/.test(n))s+=40;if(/microsoft|google|natural|neural|premium|enhanced/.test(n))s+=15;if(/avri|male|man/.test(n))s-=30;return s};
-  return vs.sort((a,b)=>score(b)-score(a))[0]||null;
-}
+let currentCandidateAudio=null,currentCandidateAudioUrl=null;
 function candidatePlaybackError(){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).speechError||'Playback unavailable';}
-function speakCandidate(candidate){
-  const pronunciation=String(candidate?.pronunciation||candidate?.spelling||'').trim();if(!pronunciation||!('speechSynthesis'in window)){candidatePlaybackError();return;}
-  try{speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(pronunciation),voice=preferredHebrewVoice();x.lang='he-IL';if(voice)x.voice=voice;x.rate=.72;x.pitch=1;x.volume=1;x.onerror=()=>candidatePlaybackError();speechSynthesis.speak(x);}catch(_e){candidatePlaybackError();}
+async function speakCandidate(candidate){
+  const spelling=String(candidate?.spelling||'').trim(),pronunciation=String(candidate?.pronunciation||'').trim();
+  if(!spelling||!pronunciation||!V29_API_BASE){candidatePlaybackError();return;}
+  try{
+    if(currentCandidateAudio){try{currentCandidateAudio.pause()}catch(_e){}}
+    if(currentCandidateAudioUrl){try{URL.revokeObjectURL(currentCandidateAudioUrl)}catch(_e){}currentCandidateAudioUrl=null;}
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+    let res;
+    try{res=await fetch(V29_SPEAK_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({spelling,pronunciation}),signal:controller.signal});}
+    finally{clearTimeout(timer);}
+    if(!res.ok)throw new Error('playback-failed');
+    const blob=await res.blob();if(!blob.size)throw new Error('playback-empty');
+    currentCandidateAudioUrl=URL.createObjectURL(blob);currentCandidateAudio=new Audio(currentCandidateAudioUrl);
+    currentCandidateAudio.onended=()=>{if(currentCandidateAudioUrl){try{URL.revokeObjectURL(currentCandidateAudioUrl)}catch(_e){}currentCandidateAudioUrl=null;}currentCandidateAudio=null;};
+    await currentCandidateAudio.play();
+  }catch(_e){candidatePlaybackError();}
 }
 function renderFinalHebrew(candidate){
   const code=sel.value||'en',t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,pronunciation:candidate}:candidate;
@@ -1392,17 +1402,34 @@ function showChoices(records){
   box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(records[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakCandidate(records[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>resetRecording();
 }
 
-async function secureNameCandidatesFromAudio(){
-  if(!recordedAudioBlob)throw new Error('audio-required');if(!V28_API_BASE||/REPLACE/i.test(V28_API_BASE))throw new Error('engine-not-configured');
-  const form=new FormData();form.append('audio',recordedAudioBlob,'name.'+(recordedAudioBlob.type.includes('mp4')?'m4a':'webm'));
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+async function recordingBlobToWav(blob){
+  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('audio-convert');
+  const ctx=new Ctx();
   try{
-    const res=await fetch(V28_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json'},body:form,signal:controller.signal});
+    const raw=await blob.arrayBuffer();const decoded=await ctx.decodeAudioData(raw.slice(0));
+    const channels=decoded.numberOfChannels,length=decoded.length,sampleRate=decoded.sampleRate;
+    const mono=new Float32Array(length);
+    for(let ch=0;ch<channels;ch++){const data=decoded.getChannelData(ch);for(let i=0;i<length;i++)mono[i]+=data[i]/channels;}
+    const out=new ArrayBuffer(44+length*2),view=new DataView(out);
+    const text=(o,t)=>{for(let i=0;i<t.length;i++)view.setUint8(o+i,t.charCodeAt(i));};
+    text(0,'RIFF');view.setUint32(4,36+length*2,true);text(8,'WAVE');text(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);text(36,'data');view.setUint32(40,length*2,true);
+    let off=44;for(let i=0;i<length;i++,off+=2){const x=Math.max(-1,Math.min(1,mono[i]));view.setInt16(off,x<0?x*0x8000:x*0x7fff,true);}
+    return new Blob([out],{type:'audio/wav'});
+  }finally{try{await ctx.close()}catch(_e){}}
+}
+
+async function secureNameCandidatesFromAudio(){
+  if(!recordedAudioBlob)throw new Error('audio-required');if(!V29_API_BASE||/REPLACE/i.test(V29_API_BASE))throw new Error('engine-not-configured');
+  const wavBlob=await recordingBlobToWav(recordedAudioBlob);
+  const form=new FormData();form.append('audio',wavBlob,'name.wav');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
+  try{
+    const res=await fetch(V29_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json'},body:form,signal:controller.signal});
     let data=null;try{data=await res.json();}catch(_e){}
-    window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,stage:data?.stage||null};
+    window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,stage:data?.stage||null,heard:data?.heard||[],units:data?.units||[]};
     if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
-    const records=Array.isArray(data?.candidates)?data.candidates.map(x=>typeof x==='string'?{spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)}:{spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')}).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,64):[];
-    if(!records.length)throw new Error('no-candidates');window.__lastNameEngineDiagnostic={ok:true,status:res.status,version:data?.version||28,error:null,stage:'recording-only'};return {candidates:records,heard:data?.heard||[],base:data?.base||'',recognition:data?.recognition||'server-audio-v28'};
+    const records=Array.isArray(data?.candidates)?data.candidates.map(x=>typeof x==='string'?{spelling:normalizeHebrewName(x),pronunciation:String(data?.heard?.[0]||'')}:{spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||data?.heard?.[0]||'')}).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&x.pronunciation).slice(0,64):[];
+    if(!records.length)throw new Error('no-candidates');window.__lastNameEngineDiagnostic={ok:true,status:res.status,version:data?.version||29,error:null,stage:'direct-audio-analysis',heard:data?.heard||[],units:data?.units||[]};return {candidates:records,heard:data?.heard||[],base:data?.base||records[0]?.spelling||'',recognition:data?.recognition||'openai-direct-audio-v29'};
   }finally{clearTimeout(timer);}
 }
 async function processRecordedAudio(){
@@ -1448,7 +1475,7 @@ async function beginRecording(e){
 function releaseRecording(e){
   if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;e?.preventDefault?.();
   if(pointerId!==null){try{mic.releasePointerCapture(pointerId)}catch(_e){}}pointerId=null;
-  // V28: releasing the button does NOT stop the recording. Silence/8-second limit does.
+  // V29: releasing the button does NOT stop the recording. Silence/8-second limit does.
 }
 function resetRecording(clearStatusToo=true){
   clearRecordTimer();stopRing();stopVoiceActivityMonitor();processAfterStop=false;
@@ -1457,7 +1484,7 @@ function resetRecording(clearStatusToo=true){
   if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');updateDualState();if(clearStatusToo)clearStatus();
 }
 
-window.__nameEngineNextSelfTest=()=>({version:28,recordingOnly:true,oneAudioTranscription:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,secondAsrPass:false,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,endpoint:V28_API_ENDPOINT});
+window.__nameEngineNextSelfTest=()=>({version:29,recordingOnly:true,directAudioModel:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,whisperPass:false,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,analysisEndpoint:V29_API_ENDPOINT,speakEndpoint:V29_SPEAK_ENDPOINT});
 
 ensureRecorderLayout();
 mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',releaseRecording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1554,9 +1581,198 @@ document.addEventListener('DOMContentLoaded',function(){
 }
 </style>
 
-<style id="v28-recording-only-scope">
+<style id="v29-recording-only-scope">
 #v27TypedField,#discoverBtn{display:none!important}
 .dual-inputs{grid-template-columns:1fr!important}
 </style>
-</body>
+\n<style id="v30-stable-shell-and-transitions">
+/* V30 — one physical shell across all pages. This block intentionally wins over legacy page-specific rules. */
+:root{
+  --v30-page-pad:20px;
+  --v30-lang-width:280px;
+  --v30-nav-width:230px;
+  --v30-nav-gap:10px;
+  --v30-top-height:112px;
+}
+.wrap{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:18px var(--v30-page-pad) 28px!important;
+}
+.top{
+  position:relative!important;
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) var(--v30-lang-width) minmax(0,1fr)!important;
+  grid-template-rows:var(--v30-top-height)!important;
+  align-items:start!important;
+  column-gap:18px!important;
+  row-gap:0!important;
+  width:100%!important;
+  min-height:var(--v30-top-height)!important;
+  height:var(--v30-top-height)!important;
+  margin:0!important;
+  padding:0!important;
+  contain:layout style;
+  view-transition-name:v30-top-shell;
+}
+.top > :first-child,
+.top > .title-block{
+  grid-column:1!important;
+  grid-row:1!important;
+  justify-self:start!important;
+  align-self:start!important;
+  min-width:0!important;
+  width:100%!important;
+  height:var(--v30-top-height)!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+.top .controls{
+  display:contents!important;
+  direction:ltr!important;
+}
+.top .controls .select-wrap,
+.top .controls > .custom-lang-picker{
+  grid-column:2!important;
+  grid-row:1!important;
+  justify-self:center!important;
+  align-self:start!important;
+  width:var(--v30-lang-width)!important;
+  min-width:var(--v30-lang-width)!important;
+  max-width:var(--v30-lang-width)!important;
+  margin:0!important;
+}
+.top .controls .select-wrap{position:relative!important;}
+.top .controls #printBtn{
+  grid-column:3!important;
+  grid-row:1!important;
+  justify-self:end!important;
+  align-self:start!important;
+  width:auto!important;
+  max-width:240px!important;
+  margin:0!important;
+}
+.custom-lang-picker{
+  width:var(--v30-lang-width)!important;
+  min-width:var(--v30-lang-width)!important;
+  max-width:var(--v30-lang-width)!important;
+}
+.page-nav,.nav{
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,var(--v30-nav-width))!important;
+  grid-template-rows:64px!important;
+  gap:var(--v30-nav-gap)!important;
+  justify-content:end!important;
+  align-items:stretch!important;
+  width:100%!important;
+  height:64px!important;
+  min-height:64px!important;
+  margin:12px 0 22px!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+  contain:layout style;
+  view-transition-name:v30-navigation;
+}
+.page-nav #navName,.nav #navName{grid-column:1!important;grid-row:1!important;}
+.page-nav #navMeaning,.nav #navMeaning{grid-column:2!important;grid-row:1!important;}
+.page-nav #navAlpha,.nav #navAlpha{grid-column:3!important;grid-row:1!important;}
+.page-nav a,.nav a{
+  width:var(--v30-nav-width)!important;
+  min-width:var(--v30-nav-width)!important;
+  max-width:var(--v30-nav-width)!important;
+  height:64px!important;
+  min-height:64px!important;
+  max-height:64px!important;
+  margin:0!important;
+  padding:8px 10px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1.16!important;
+  overflow:hidden!important;
+  white-space:normal!important;
+  text-overflow:clip!important;
+}
+.brand-hero{view-transition-name:v30-brand;}
+/* Cross-document View Transitions: shell stays visually anchored; page content cross-fades. */
+@view-transition{navigation:auto;}
+::view-transition-group(v30-brand),
+::view-transition-group(v30-top-shell),
+::view-transition-group(v30-navigation){animation-duration:0s;}
+::view-transition-old(root){animation:v30-fade-out 150ms ease-out both;}
+::view-transition-new(root){animation:v30-fade-in 220ms cubic-bezier(.2,.7,.2,1) both;}
+@keyframes v30-fade-out{to{opacity:.86;}}
+@keyframes v30-fade-in{from{opacity:.86;}to{opacity:1;}}
+html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:translateY(1px);}
+.wrap > :not(.top):not(.page-nav){transition:opacity 110ms ease,transform 110ms ease;}
+@media(max-width:760px){
+  :root{--v30-page-pad:10px;--v30-top-height:176px;--v30-nav-gap:5px;}
+  .top{
+    grid-template-columns:1fr!important;
+    grid-template-rows:100px 66px!important;
+    height:var(--v30-top-height)!important;
+    min-height:var(--v30-top-height)!important;
+  }
+  .top > :first-child,.top > .title-block{
+    grid-column:1!important;grid-row:1!important;
+    height:100px!important;
+  }
+  .top .controls .select-wrap,
+  .top .controls > .custom-lang-picker{
+    grid-column:1!important;grid-row:2!important;
+    justify-self:center!important;align-self:start!important;
+    width:min(var(--v30-lang-width),100%)!important;
+    min-width:0!important;max-width:var(--v30-lang-width)!important;
+  }
+  .top .controls #printBtn{
+    grid-column:1!important;grid-row:2!important;
+    justify-self:end!important;align-self:start!important;
+    max-width:calc((100% - min(var(--v30-lang-width),70vw))/2 - 6px)!important;
+    font-size:11px!important;padding:9px 6px!important;
+  }
+  .page-nav,.nav{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:64px!important;
+    justify-content:stretch!important;
+  }
+  .page-nav a,.nav a{
+    width:100%!important;min-width:0!important;max-width:none!important;
+    font-size:clamp(9.5px,2.75vw,12px)!important;padding:7px 3px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important;}
+  .wrap > :not(.top):not(.page-nav){transition:none!important;}
+}
+</style>\n
+<script id="v30-navigation-smoothing">
+(()=>{
+  /* Prefetch sibling pages after first paint so normal navigation feels immediate. */
+  const pages=['index.html','LetterMeaning.html','VoiceFun.html'];
+  const prefetch=()=>pages.forEach(href=>{
+    if(location.pathname.endsWith('/'+href)||location.pathname.endsWith(href)) return;
+    if(document.head.querySelector('link[rel="prefetch"][href="'+href+'"]')) return;
+    const l=document.createElement('link'); l.rel='prefetch'; l.href=href; l.as='document'; document.head.appendChild(l);
+  });
+  if('requestIdleCallback' in window) requestIdleCallback(prefetch,{timeout:1200}); else setTimeout(prefetch,250);
+
+  /* Fallback polish for browsers without cross-document View Transitions. */
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href]');
+    if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    const raw=a.getAttribute('href')||'';
+    if(!/^(?:index|LetterMeaning|VoiceFun)\.html(?:[?#].*)?$/.test(raw)) return;
+    if(document.startViewTransition) return;
+    e.preventDefault();
+    document.documentElement.classList.add('v30-page-leaving');
+    setTimeout(()=>{location.href=a.href;},105);
+  },true);
+})();
+</script>\n</body>
 </html>

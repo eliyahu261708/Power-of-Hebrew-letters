@@ -1042,5 +1042,194 @@ document.addEventListener('DOMContentLoaded',function(){
  #printedFinalLabel,#handFinalLabel{font-size:10px!important}
 }
 </style>
-</body>
+\n<style id="v30-stable-shell-and-transitions">
+/* V30 — one physical shell across all pages. This block intentionally wins over legacy page-specific rules. */
+:root{
+  --v30-page-pad:20px;
+  --v30-lang-width:280px;
+  --v30-nav-width:230px;
+  --v30-nav-gap:10px;
+  --v30-top-height:112px;
+}
+.wrap{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:18px var(--v30-page-pad) 28px!important;
+}
+.top{
+  position:relative!important;
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) var(--v30-lang-width) minmax(0,1fr)!important;
+  grid-template-rows:var(--v30-top-height)!important;
+  align-items:start!important;
+  column-gap:18px!important;
+  row-gap:0!important;
+  width:100%!important;
+  min-height:var(--v30-top-height)!important;
+  height:var(--v30-top-height)!important;
+  margin:0!important;
+  padding:0!important;
+  contain:layout style;
+  view-transition-name:v30-top-shell;
+}
+.top > :first-child,
+.top > .title-block{
+  grid-column:1!important;
+  grid-row:1!important;
+  justify-self:start!important;
+  align-self:start!important;
+  min-width:0!important;
+  width:100%!important;
+  height:var(--v30-top-height)!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+.top .controls{
+  display:contents!important;
+  direction:ltr!important;
+}
+.top .controls .select-wrap,
+.top .controls > .custom-lang-picker{
+  grid-column:2!important;
+  grid-row:1!important;
+  justify-self:center!important;
+  align-self:start!important;
+  width:var(--v30-lang-width)!important;
+  min-width:var(--v30-lang-width)!important;
+  max-width:var(--v30-lang-width)!important;
+  margin:0!important;
+}
+.top .controls .select-wrap{position:relative!important;}
+.top .controls #printBtn{
+  grid-column:3!important;
+  grid-row:1!important;
+  justify-self:end!important;
+  align-self:start!important;
+  width:auto!important;
+  max-width:240px!important;
+  margin:0!important;
+}
+.custom-lang-picker{
+  width:var(--v30-lang-width)!important;
+  min-width:var(--v30-lang-width)!important;
+  max-width:var(--v30-lang-width)!important;
+}
+.page-nav,.nav{
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,var(--v30-nav-width))!important;
+  grid-template-rows:64px!important;
+  gap:var(--v30-nav-gap)!important;
+  justify-content:end!important;
+  align-items:stretch!important;
+  width:100%!important;
+  height:64px!important;
+  min-height:64px!important;
+  margin:12px 0 22px!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+  contain:layout style;
+  view-transition-name:v30-navigation;
+}
+.page-nav #navName,.nav #navName{grid-column:1!important;grid-row:1!important;}
+.page-nav #navMeaning,.nav #navMeaning{grid-column:2!important;grid-row:1!important;}
+.page-nav #navAlpha,.nav #navAlpha{grid-column:3!important;grid-row:1!important;}
+.page-nav a,.nav a{
+  width:var(--v30-nav-width)!important;
+  min-width:var(--v30-nav-width)!important;
+  max-width:var(--v30-nav-width)!important;
+  height:64px!important;
+  min-height:64px!important;
+  max-height:64px!important;
+  margin:0!important;
+  padding:8px 10px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  line-height:1.16!important;
+  overflow:hidden!important;
+  white-space:normal!important;
+  text-overflow:clip!important;
+}
+.brand-hero{view-transition-name:v30-brand;}
+/* Cross-document View Transitions: shell stays visually anchored; page content cross-fades. */
+@view-transition{navigation:auto;}
+::view-transition-group(v30-brand),
+::view-transition-group(v30-top-shell),
+::view-transition-group(v30-navigation){animation-duration:0s;}
+::view-transition-old(root){animation:v30-fade-out 150ms ease-out both;}
+::view-transition-new(root){animation:v30-fade-in 220ms cubic-bezier(.2,.7,.2,1) both;}
+@keyframes v30-fade-out{to{opacity:.86;}}
+@keyframes v30-fade-in{from{opacity:.86;}to{opacity:1;}}
+html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:translateY(1px);}
+.wrap > :not(.top):not(.page-nav){transition:opacity 110ms ease,transform 110ms ease;}
+@media(max-width:760px){
+  :root{--v30-page-pad:10px;--v30-top-height:176px;--v30-nav-gap:5px;}
+  .top{
+    grid-template-columns:1fr!important;
+    grid-template-rows:100px 66px!important;
+    height:var(--v30-top-height)!important;
+    min-height:var(--v30-top-height)!important;
+  }
+  .top > :first-child,.top > .title-block{
+    grid-column:1!important;grid-row:1!important;
+    height:100px!important;
+  }
+  .top .controls .select-wrap,
+  .top .controls > .custom-lang-picker{
+    grid-column:1!important;grid-row:2!important;
+    justify-self:center!important;align-self:start!important;
+    width:min(var(--v30-lang-width),100%)!important;
+    min-width:0!important;max-width:var(--v30-lang-width)!important;
+  }
+  .top .controls #printBtn{
+    grid-column:1!important;grid-row:2!important;
+    justify-self:end!important;align-self:start!important;
+    max-width:calc((100% - min(var(--v30-lang-width),70vw))/2 - 6px)!important;
+    font-size:11px!important;padding:9px 6px!important;
+  }
+  .page-nav,.nav{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:64px!important;
+    justify-content:stretch!important;
+  }
+  .page-nav a,.nav a{
+    width:100%!important;min-width:0!important;max-width:none!important;
+    font-size:clamp(9.5px,2.75vw,12px)!important;padding:7px 3px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important;}
+  .wrap > :not(.top):not(.page-nav){transition:none!important;}
+}
+</style>\n
+<script id="v30-navigation-smoothing">
+(()=>{
+  /* Prefetch sibling pages after first paint so normal navigation feels immediate. */
+  const pages=['index.html','LetterMeaning.html','VoiceFun.html'];
+  const prefetch=()=>pages.forEach(href=>{
+    if(location.pathname.endsWith('/'+href)||location.pathname.endsWith(href)) return;
+    if(document.head.querySelector('link[rel="prefetch"][href="'+href+'"]')) return;
+    const l=document.createElement('link'); l.rel='prefetch'; l.href=href; l.as='document'; document.head.appendChild(l);
+  });
+  if('requestIdleCallback' in window) requestIdleCallback(prefetch,{timeout:1200}); else setTimeout(prefetch,250);
+
+  /* Fallback polish for browsers without cross-document View Transitions. */
+  document.addEventListener('click',e=>{
+    const a=e.target.closest('a[href]');
+    if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    const raw=a.getAttribute('href')||'';
+    if(!/^(?:index|LetterMeaning|VoiceFun)\.html(?:[?#].*)?$/.test(raw)) return;
+    if(document.startViewTransition) return;
+    e.preventDefault();
+    document.documentElement.classList.add('v30-page-leaving');
+    setTimeout(()=>{location.href=a.href;},105);
+  },true);
+})();
+</script>\n</body>
 </html>
