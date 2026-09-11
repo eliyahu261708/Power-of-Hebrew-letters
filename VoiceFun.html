@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- Official release: Version 21 — Same Hebrew female narrator as LetterMeaning -->
+<!-- Official release: Version 22 — sound-faithful variants, hard cross-check, improved pronunciation -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ThePowerOfHebrew — My Name in Hebrew — v16</title>
+<title>ThePowerOfHebrew — My Name in Hebrew — v22</title>
 <style>
 
   :root{
@@ -1330,7 +1330,7 @@ function isValidNameInput(value){
   return validContextualFinals(v)&&v.split(' ').every(w=>[...w].some(c=>/\p{L}/u.test(c)));
 }
 
-/* Version 21 — THE RECORDED AUDIO IS THE PRIMARY SOURCE.
+/* Version 22 — THE RECORDED AUDIO IS THE PRIMARY SOURCE.
    The short recording is sent to the private Cloudflare Worker, where server-side
    speech recognition produces one Hebrew source spelling. Typed text is only a
    secondary cross-check/ranking hint and can never seed a candidate. The private
@@ -1378,7 +1378,7 @@ async function secureNameCandidatesFromHebrew(typed){
   if(!V20_API_BASE||/REPLACE/i.test(V20_API_BASE))throw new Error('engine-not-configured');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
   try{
-    const res=await fetch(V20_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json','X-TPH-Client':'v20-audio'},body:JSON.stringify({heard,typed:String(typed||'').slice(0,80)}),signal:controller.signal});
+    const res=await fetch(V20_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json','X-TPH-Client':'v22-audio'},body:JSON.stringify({heard,typed:String(typed||'').slice(0,80)}),signal:controller.signal});
     if(!res.ok)throw new Error('secure-engine-'+res.status);
     const data=await res.json();
     const records=Array.isArray(data.candidates)?data.candidates.map(x=>{
@@ -1416,7 +1416,7 @@ async function secureNameCandidatesFromAudio(typed){
   form.append('audio',audio,audio.type==='audio/wav'?'name.wav':'name-audio');form.append('typed',String(typed||'').slice(0,80));
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
   try{
-    const res=await fetch(V20_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json','X-TPH-Client':'v20-audio'},body:form,signal:controller.signal});
+    const res=await fetch(V20_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json','X-TPH-Client':'v22-audio'},body:form,signal:controller.signal});
     let data=null;try{data=await res.json();}catch(_e){}
     if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
     const records=Array.isArray(data?.candidates)?data.candidates.map(x=>typeof x==='string'?{spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)}:{spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')}).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,12):[];
@@ -1496,10 +1496,11 @@ async function reconcileName(){
     throw new Error('no-candidates');
   }catch(err){
     console.warn('Private audio name engine unavailable',err);resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');
-    statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();
+    if(code==='cross-check-mismatch')statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;
+    else statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();
   }
 }
-window.__nameEngineNextSelfTest=()=>({version:21,secure:true,clientRulesExposed:false,rawAudioSent:true,serverAudioAsr:true,browserSpeechRecognitionPrimary:false,ipaUsed:false,typedCanSeedCandidates:false,typedSentToPrivateEngine:true,recordingPrimary:true,typedCrossCheck:true,separatePronunciation:true,endpoint:V20_API_ENDPOINT});
+window.__nameEngineNextSelfTest=()=>({version:22,secure:true,clientRulesExposed:false,rawAudioSent:true,serverAudioAsr:true,browserSpeechRecognitionPrimary:false,ipaUsed:false,typedCanSeedCandidates:false,typedSentToPrivateEngine:true,recordingPrimary:true,typedCrossCheck:true,separatePronunciation:true,endpoint:V20_API_ENDPOINT});
 window.__inputNextSelfTest=function(){
   const cases=[['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],["ג'ורג'","ג'ורג'",true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]];
   return cases.map(([raw,clean,valid])=>{const got=sanitizeNameInput(raw);return {raw,expectedClean:clean,actualClean:got,expectedValid:valid,actualValid:isValidNameInput(got),pass:got===clean&&isValidNameInput(got)===valid};});
