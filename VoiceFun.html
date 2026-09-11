@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- Official release: Version 15 — Secure Simple Hebrew listening + private alternatives engine -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ThePowerOfHebrew — My Name in Hebrew</title>
+<title>ThePowerOfHebrew — My Name in Hebrew — v14 Secure Simple Secure</title>
 <style>
 
   :root{
@@ -999,6 +1000,7 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
   box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.20)!important;
 }
 </style>
+<script src="engine-config.js"></script>
 </head>
 <body>
 
@@ -1345,197 +1347,68 @@ function isValidNameInput(value){
   return validContextualFinals(v)&&v.split(' ').every(w=>[...w].some(c=>/\p{L}/u.test(c)));
 }
 
-const HEBREW_SOUND_ALTERNATIVES={
-  "ב":[["ב",0],["ו",.24]],"ו":[["ו",0],["ב",.25]],
-  "כ":[["כ",0],["ק",.24],["ח",.28]],"ך":[["כ",0],["ק",.24],["ח",.28]],
-  "ק":[["ק",0],["כ",.24]],"ח":[["ח",0],["כ",.25]],
-  "ט":[["ט",0],["ת",.23]],"ת":[["ת",0],["ט",.23]],
-  "א":[["א",0],["ע",.27],["ה",.34],["",.32]],"ע":[["ע",0],["א",.27],["",.38]],
-  "ה":[["ה",0],["א",.34],["",.30],["ח",.42]],"י":[["י",0],["",.27]],
-  "ס":[["ס",0],["ז",.23],["ש",.42],["צ",.52]],"ז":[["ז",0],["ס",.23],["ז׳",.45]],"ש":[["ש",0],["ס",.42]],
-  "פ":[["פ",0],["ב",.52]],"ף":[["פ",0],["ב",.52]],
-  "ג":[["ג",0],["ג׳",.34]],"צ":[["צ",0],["ס",.52]],"ץ":[["צ",0],["ס",.52]],
-  "מ":[["מ",0]],"ם":[["מ",0]],"נ":[["נ",0]],"ן":[["נ",0]]
-};
-const COMMON_HEBREW_NAMES=new Set(`
-אבי אביב אביגיל אביתר אבנר אברהם אדם אהוד אהרון איל אילן אילנה אילת איתי איתן אלון אלי אליה אליהו אליאב אליאור אלירן אמיר אמיתי אסף אריאל אריה ארז בארי בן בנימין בר ברק בתאל גבריאל גדי גדעון גל גלעד דב דבורה דוד דני דניאל דניאלה דפנה דור דורון דרור הדס הילה הלל ורד זיו זוהר חוה חיים חן טל יאיר יובל יהודה יונתן יוסף יוסי יעל יפעת יצחק ירון ישראל ישי ליאור ליה ליאם לינוי לירון מאיה מאיר מיכאל מיכל משה מור מורן מרים מתן נועה נועם ניב ניר ניסים נעמי נעמה נתן נתנאל סיוון סיגל עמית עמיחי עידן עידו עומר עומרי ענת ערן פז צבי קרן רון רוני רות רחל רפאל שחר שי שירה שלומי שלמה שמואל שרון תומר תמר
-אדל אדריאן אלברט אלכס אלכסנדר אלנה אנדריי אנה אנטון אריק ברברה דיאנה דניס ויקטור ולדימיר ולנטינה יוליה יורי כריסטינה לאורה לוקה ליאון לינדה מריה מרינה מרקו מקסים מוזס מוחמד מחמאד מקסים ניקול ניקולס נטליה סופיה סרגיי פאולו פדרו קרלוס רוברט רומן
-ג׳ורג׳ ג׳ון ג׳יימס ג׳ק ג׳ייקוב ג׳וזף ג׳וליה ג׳ניפר דיוויד מייקל מישל סטיבן סטיב סוזן שרה תומאס ויליאם ריצ׳רד צ׳רלס
-`.trim().split(/\s+/));
-function hebrewNamePriorBonus(name){
-  const n=normalizeHebrewName(name);if(!n)return 0;
-  if(COMMON_HEBREW_NAMES.has(n))return .20;
-  const parts=n.split(/\s+/).filter(Boolean);if(parts.length>1&&parts.every(x=>COMMON_HEBREW_NAMES.has(x)))return .14;
-  return 0;
+/* Version 15 Secure Simple — the browser's speech recognizer only supplies a
+   Hebrew listening result. The proprietary Hebrew-alternative rules stay on the
+   private Cloudflare Worker. No IPA, phoneme alphabet or Latin transliteration
+   is used by this page. Audio itself is not sent to the private engine. */
+const V15_API_BASE=String(window.V15_API_BASE||'').replace(/\/$/,'');
+const V15_API_ENDPOINT=V15_API_BASE+'/api/name-candidates';
+let hebrewRecognition=null,hebrewRecognitionEnded=true,hebrewRecognitionHypotheses=[],hebrewRecognitionError='';
+function recognitionCtor(){return window.SpeechRecognition||window.webkitSpeechRecognition||null;}
+function addRecognitionHypothesis(value,priority=0){
+  const n=normalizeHebrewName(value);if(!n||n.replace(/ /g,'').length<2)return;
+  const old=hebrewRecognitionHypotheses.find(x=>x.text===n);
+  if(old){old.priority=Math.min(old.priority,priority);return;}
+  hebrewRecognitionHypotheses.push({text:n,priority});
+  hebrewRecognitionHypotheses.sort((a,b)=>a.priority-b.priority||a.text.length-b.text.length||a.text.localeCompare(b.text,'he'));
+  hebrewRecognitionHypotheses=hebrewRecognitionHypotheses.slice(0,8);
 }
-function rankedUnique(items,limit,key="name"){
-  const map=new Map();
-  for(const item of items){const k=item[key];if(!k)continue;const old=map.get(k);if(!old||item.score<old.score)map.set(k,item);}
-  return [...map.values()].sort((a,b)=>a.score-b.score).slice(0,limit);
+function startHebrewRecognition(){
+  const Ctor=recognitionCtor();hebrewRecognitionHypotheses=[];hebrewRecognitionError='';hebrewRecognitionEnded=true;
+  if(!Ctor){hebrewRecognitionError='unsupported';return false;}
+  try{
+    const r=new Ctor();hebrewRecognition=r;hebrewRecognitionEnded=false;r.lang='he-IL';r.continuous=false;r.interimResults=true;r.maxAlternatives=5;
+    r.onresult=e=>{
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const row=e.results[i];for(let j=0;j<Math.min(row.length,5);j++)addRecognitionHypothesis(row[j].transcript,(i*10)+j+(row.isFinal?0:5));
+      }
+    };
+    r.onerror=e=>{hebrewRecognitionError=String(e?.error||'recognition-error');};
+    r.onend=()=>{hebrewRecognitionEnded=true;hebrewRecognition=null;};
+    r.start();return true;
+  }catch(e){hebrewRecognitionError='start-failed';hebrewRecognitionEnded=true;hebrewRecognition=null;return false;}
+}
+function stopHebrewRecognition(){
+  const r=hebrewRecognition;if(!r)return;try{r.stop()}catch(_e){try{r.abort()}catch(__e){}};
+}
+async function waitForHebrewRecognition(maxMs=1400){
+  const until=performance.now()+maxMs;while(!hebrewRecognitionEnded&&performance.now()<until)await new Promise(r=>setTimeout(r,60));
+}
+function clearHebrewRecognition(){
+  try{hebrewRecognition?.abort()}catch(_e){}hebrewRecognition=null;hebrewRecognitionEnded=true;hebrewRecognitionHypotheses=[];hebrewRecognitionError='';
 }
 function isPlausibleHebrewCandidate(name){
   const n=normalizeHebrewName(name);if(!n)return false;
-  const words=n.split(/\s+/).filter(Boolean);if(!words.length)return false;
-  for(const w of words){const letters=[...w].filter(c=>/[א-ת]/.test(c));if(letters.length<2)return false;}
-  return validContextualFinals(n);
+  return n.split(/\s+/).every(w=>[...w].filter(c=>/[א-ת]/.test(c)).length>=2)&&validContextualFinals(n);
 }
-function hebrewOrthographicVariants(raw,limit=52){
-  const base=normalizeHebrewName(raw);if(!base)return [];
-  let states=[{text:"",score:0}];
-  for(const ch of [...base]){
-    if(ch===" "){states=states.map(x=>({text:x.text+" ",score:x.score}));continue;}
-    if(ch==="׳"){states=states.map(x=>({text:x.text+"׳",score:x.score}));continue;}
-    const opts=HEBREW_SOUND_ALTERNATIVES[ch]||[[HEBREW_FINAL_TO_MEDIAL[ch]||ch,0]],next=[];
-    for(const st of states)for(const [out,cost] of opts)next.push({text:st.text+out,score:st.score+cost});
-    states=rankedUnique(next,limit,"text");
-  }
-  return rankedUnique(states.map(x=>({name:normalizeHebrewName(x.text),score:x.score})).filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
+async function secureNameCandidatesFromHebrew(typedValue){
+  await waitForHebrewRecognition();
+  const heard=hebrewRecognitionHypotheses.map(x=>x.text);
+  const typedHeb=normalizeHebrewName(typedValue||'');
+  if(!heard.length&&typedHeb.replace(/ /g,'').length>=2)heard.push(typedHeb);
+  if(!heard.length)throw new Error(hebrewRecognitionError||'no-hebrew-recognition');
+  if(!V15_API_BASE||/REPLACE/i.test(V15_API_BASE))throw new Error('engine-not-configured');
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  try{
+    const res=await fetch(V15_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json','X-TPH-Client':'v15-simple'},body:JSON.stringify({heard:heard.slice(0,8)}),signal:controller.signal});
+    if(!res.ok)throw new Error('secure-engine-'+res.status);
+    const data=await res.json();
+    return Array.isArray(data.candidates)?[...new Set(data.candidates.map(normalizeHebrewName).filter(isPlausibleHebrewCandidate))].slice(0,24):[];
+  }finally{clearTimeout(timer);}
 }
-function latinTokenOptions(word,i){
-  const rest=word.slice(i),len=word.length,add=(n,outs)=>({len:n,outs});
-  if(/^(ai|ay|ei|ey)/.test(rest))return add(2,[["אי",.02],["יי",.20],["י",.30],["איי",.38]]);
-  if(rest.startsWith("ie"))return add(2,rest.length===2?[["י",.02],["יה",.16],["יא",.28]]:[["יא",.03],["י",.20],["יה",.28]]);
-  if(rest.startsWith("ia"))return add(2,[["יה",.07],["יא",.12],["י",.30]]);
-  if(rest.startsWith("io"))return add(2,[["יו",.05],["יאו",.24]]);
-  if(rest.startsWith("oa"))return add(2,[["וע",.08],["ועה",.12],["ואה",.18],["וא",.25]]);
-  if(/^(oi|oy)/.test(rest))return add(2,[["וי",.05],["ואי",.20]]);
-  if(/^(ou|oo)/.test(rest))return add(2,[["ו",.02],["או",.20]]);
-  if(rest.startsWith("ea"))return add(2,[["י",.16],["א",.24],["יא",.30]]);
-  if(rest.startsWith("ae"))return add(2,[["א",.04],["ע",.16],["אי",.20],["אה",.26]]);
-  const multi=[
-    ["tch",[["צ׳",.02],["טש",.42]]],["sch",[["ש",.02],["סק",.55]]],
-    ["sh",[["ש",.01]]],["zh",[["ז׳",.02],["ז",.25]]],["kh",[["ח",.02],["כ",.16]]],
-    ["ph",[["פ",.02]]],["th",[["ת",.08],["ט",.28],["ד",.50]]],["ts",[["צ",.04],["טס",.38]]],
-    ["tz",[["צ",.04]]],["qu",[["קוו",.07],["ק",.28]]],["ng",[["נג",.08],["נ",.38]]],["ck",[["ק",.04],["כ",.22]]]
-  ];
-  for(const [token,outs] of multi)if(rest.startsWith(token))return add(token.length,outs);
-  if(rest.startsWith("ch"))return add(2,[["צ׳",.10],["ח",.14],["כ",.28],["ק",.36]]);
-  const ch=word[i],next=word[i+1]||"",prev=word[i-1]||"",isStart=i===0,isEnd=i===len-1;
-  if(/[aeiou]/.test(ch)){
-    if(ch==="a")return add(1,isStart?[["א",.02],["ע",.34]]:isEnd?[["ה",.02],["א",.20],["",.34]]:[["",.05],["א",.20],["ה",.32]]);
-    if(ch==="e")return add(1,isStart?[["א",.07],["ה",.26],["י",.36]]:isEnd?[["",.02],["ה",.18],["י",.30]]:[["",.07],["ה",.22],["א",.30],["י",.34]]);
-    if(ch==="i")return add(1,isStart?[["אי",.07],["י",.14]]:[["י",.03],["",.22]]);
-    if(ch==="o")return add(1,isStart?[["או",.05],["ו",.16]]:[["ו",.03],["",.22]]);
-    if(ch==="u")return add(1,isStart?[["או",.08],["ו",.13]]:[["ו",.03],["",.20]]);
-  }
-  const softG=ch==="g"&&/[eiy]/.test(next),intervocalicS=ch==='s'&&/[aeiouy]/.test(prev)&&/[aeiouy]/.test(next);
-  const cons={
-    b:[["ב",.02],["ו",.48]],c:[["ק",.12],["ס",.18],["כ",.30]],d:[["ד",.01]],f:[["פ",.01]],
-    g:softG?[["ג׳",.04],["ג",.20]]:[["ג",.02],["ג׳",.30]],h:[["ה",.08],["ח",.11],["",.40]],
-    j:[["ג׳",.02],["י",.34]],k:[["ק",.07],["כ",.13]],l:[["ל",.01]],m:[["מ",.01]],n:[["נ",.01]],
-    p:[["פ",.01]],q:[["ק",.02]],r:[["ר",.01]],s:intervocalicS?[["ז",.02],["ס",.08],["ש",.30]]:[["ס",.03],["ז",.14],["ש",.24]],t:[["ט",.09],["ת",.12]],
-    v:[["ב",.04],["ו",.18]],w:[["ו",.03],["ב",.36]],x:[["קס",.04],["ז",.30]],z:[["ז",.02],["ס",.20]],
-    y:isStart&&/[aeiou]/.test(next)?[["י",.02]]:[["י",.04],["",.26]]
-  };
-  return add(1,cons[ch]||[["",1.2]]);
-}
-function latinWordCandidates(word,limit=64){
-  word=String(word||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z]/g,"");
-  if(!word)return [];
-  let states=[{i:0,text:"",score:0}],done=[];
-  while(states.length){
-    const next=[];
-    for(const st of states){
-      if(st.i>=word.length){done.push(st);continue;}
-      if(st.i+1<word.length&&word[st.i]===word[st.i+1]&&!/[aeiouy]/.test(word[st.i])){
-        const o=latinTokenOptions(word,st.i);for(const [out,cost] of o.outs)next.push({i:st.i+2,text:st.text+out,score:st.score+cost+.01});
-      }
-      const o=latinTokenOptions(word,st.i);for(const [out,cost] of o.outs)next.push({i:st.i+o.len,text:st.text+out,score:st.score+cost});
-    }
-    next.sort((a,b)=>a.score-b.score||b.i-a.i);const seen=new Set();states=[];
-    for(const x of next){const k=x.i+"|"+x.text;if(!seen.has(k)){seen.add(k);states.push(x);}if(states.length>=limit)break;}
-    if(done.length>limit*3)break;
-  }
-  return rankedUnique(done.map(x=>({name:normalizeHebrewName(x.text).replace(/אא/g,"א").replace(/הה/g,"ה").replace(/ווי/g,"וי"),score:x.score})).filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
-}
-
-/* Direct Arabic/Persian/Urdu -> Hebrew sound mapping. This is secondary to
-   the direct Hebrew audio decode, but it preserves deep consonants instead of
-   collapsing them through Latin (e.g. ح -> ח, ع -> ע, خ -> כ/ח). */
-const ARABIC_TO_HEBREW={
-  'ا':[['א',.10]],'أ':[['א',.08]],'إ':[['א',.10],['י',.20]],'آ':[['א',.05]],'ء':[['א',.18]],
-  'ب':[['ב',.02]],'پ':[['פ',.02]],'ت':[['ת',.04],['ט',.16]],'ث':[['ת',.12],['ס',.18]],
-  'ج':[['ג׳',.05],['ג',.18]],'چ':[['צ׳',.04]],'ح':[['ח',.01]],'خ':[['כ',.05],['ח',.12]],
-  'د':[['ד',.02]],'ذ':[['ז',.08],['ד',.18]],'ر':[['ר',.02]],'ز':[['ז',.02]],'ژ':[['ז׳',.04]],
-  'س':[['ס',.02]],'ش':[['ש',.02]],'ص':[['ס',.05],['צ',.22]],'ض':[['ד',.12],['צ',.26]],
-  'ط':[['ט',.03]],'ظ':[['ז',.10],['ט',.18]],'ع':[['ע',.02],['א',.22]],'غ':[['ג',.10],['ע',.20]],
-  'ف':[['פ',.02]],'ق':[['ק',.02]],'ك':[['כ',.05],['ק',.12]],'ک':[['כ',.05],['ק',.12]],'گ':[['ג',.03]],
-  'ل':[['ל',.02]],'م':[['מ',.01]],'ن':[['נ',.01]],'ه':[['ה',.03]],'ہ':[['ה',.03]],
-  'و':[['ו',.03]],'ي':[['י',.03]],'ی':[['י',.03]],'ى':[['י',.12],['א',.24]],'ة':[['ה',.06],['ת',.18]]
-};
-function directArabicCandidates(raw,limit=48){
-  const text=String(raw||'').normalize('NFKC').replace(/[\u064B-\u065F\u0670]/g,'').trim();
-  if(!/[\u0600-\u06FF]/.test(text))return [];
-  let states=[{name:'',score:0}];
-  for(const ch of [...text]){
-    if(/\s/.test(ch)){states=states.map(x=>({name:x.name+' ',score:x.score}));continue;}
-    const opts=ARABIC_TO_HEBREW[ch];if(!opts)continue;
-    const next=[];for(const st of states)for(const [o,c] of opts)next.push({name:st.name+o,score:st.score+c});states=rankedUnique(next,limit);
-  }
-  const expanded=[];
-  for(const x of states){
-    const n=normalizeHebrewName(x.name);if(!n)continue;expanded.push({name:n,score:x.score+.10});
-    /* Arabic script often omits short vowels. Hebrew vowel letters are allowed
-       only as low-weight alternatives; the audio decode remains the leader. */
-    if(/^מחמד$/.test(normalizeFinalsForCompare(n))){expanded.push({name:'מוחמד',score:x.score+.16},{name:'מחמאד',score:x.score+.20});}
-  }
-  return rankedUnique(expanded.filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
-}
-function generateHebrewNameCandidates(raw,limit=56){
-  const text=cleanRecognizedName(raw);if(!text)return [];
-  if(/[א-ת]/.test(text))return hebrewOrthographicVariants(text,limit);
-  const ar=directArabicCandidates(text,limit);if(ar.length)return ar;
-  let latin=text.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
-  if(!/[A-Za-z]/.test(latin))return [];
-  const words=latin.split(/\s+/).filter(Boolean);let combos=[{name:"",score:0}];
-  for(const word of words){
-    const wc=latinWordCandidates(word,limit).slice(0,24);if(!wc.length)continue;
-    const next=[];for(const a of combos)for(const b of wc)next.push({name:(a.name?a.name+" ":"")+b.name,score:a.score+b.score});
-    combos=rankedUnique(next,limit);
-  }
-  return rankedUnique(combos.map(x=>({name:normalizeHebrewName(x.name),score:x.score})).filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
-}
-function hebrewSubstitutionCost(a,b){
-  if(a===b)return 0;const pair=a+b;
-  if(["בו","וב","כק","קכ","כח","חכ","טת","תט","אע","עא","סז","זס"].includes(pair))return .22;
-  if(["אה","הא","או","וא","אי","יא","הי","יה","הו","וה"].includes(pair))return .30;
-  if(["סש","שס","סצ","צס"].includes(pair))return .44;
-  if(["פב","בפ"].includes(pair))return .54;
-  return 1;
-}
-function hebrewDeleteCost(ch){return "אהוי".includes(ch)?.26:1;}
-function weightedHebrewDistance(a,b){
-  a=[...normalizeFinalsForCompare(a).replace(/\s+/g,' ')];b=[...normalizeFinalsForCompare(b).replace(/\s+/g,' ')];
-  let prev=Array(b.length+1).fill(0);for(let j=1;j<=b.length;j++)prev[j]=prev[j-1]+(b[j-1]===' '?.45:hebrewDeleteCost(b[j-1]));
-  for(let i=1;i<=a.length;i++){
-    const cur=Array(b.length+1).fill(0);cur[0]=prev[0]+(a[i-1]===' '?.45:hebrewDeleteCost(a[i-1]));
-    for(let j=1;j<=b.length;j++){
-      const da=a[i-1]===' '?.45:hebrewDeleteCost(a[i-1]),db=b[j-1]===' '?.45:hebrewDeleteCost(b[j-1]),sub=(a[i-1]===' '||b[j-1]===' ')?(a[i-1]===b[j-1]?0:.7):hebrewSubstitutionCost(a[i-1],b[j-1]);
-      cur[j]=Math.min(prev[j]+da,cur[j-1]+db,prev[j-1]+sub);
-    }
-    prev=cur;
-  }
-  return prev[b.length];
-}
-function hebrewSimilarity(a,b){const x=normalizeFinalsForCompare(a),y=normalizeFinalsForCompare(b),max=Math.max([...x].length,[...y].length,1);return Math.max(0,1-weightedHebrewDistance(x,y)/max);}
-function normalizeRawText(x){return String(x||'').normalize('NFKD').toLocaleLowerCase().replace(/\p{M}/gu,'').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim();}
-function rawTextSimilarity(a,b){
-  a=[...normalizeRawText(a)];b=[...normalizeRawText(b)];if(!a.length||!b.length)return 0;
-  let p=Array(b.length+1).fill(0).map((_,i)=>i);for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return Math.max(0,1-p[b.length]/Math.max(a.length,b.length,1));
-}
-function typedHebrewCandidates(typed,limit=48){
-  if(/[א-ת]/.test(typed)){
-    const exact=normalizeHebrewName(typed);const vars=hebrewOrthographicVariants(exact,limit).map((x,i)=>({name:x.name,score:x.score+(x.name===exact?0:.08)}));
-    return rankedUnique([{name:exact,score:0},...vars].filter(x=>isPlausibleHebrewCandidate(x.name)),limit);
-  }
-  return generateHebrewNameCandidates(typed,limit);
-}
-function bestTypedSimilarity(name,typedCandidates){let best=0,bestTyped=null;for(const t of typedCandidates){const sim=hebrewSimilarity(name,t.name);if(sim>best){best=sim;bestTyped=t;}}return {similarity:best,typed:bestTyped};}
-
 const mic=document.getElementById("mic"), statusEl=document.getElementById("status"), resultBox=document.getElementById("resultBox");
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
-const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-let recognition=null,heardText="",recognitionCandidates=[];
+
 const TAP_HINT={he:'נא ללחוץ על המיקרופון כדי להקליט',en:'Tap the microphone to begin',ar:'اضغط على الميكروفون للبدء',bn:'শুরু করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风开始',nl:'Tik op de microfoon om te beginnen',fil:'I-tap ang mikropono para magsimula',fr:'Touchez le microphone pour commencer',de:'Tippe auf das Mikrofon, um zu beginnen',el:'Πατήστε το μικρόφωνο για να ξεκινήσετε',hi:'शुरू करने के लिए माइक्रोफ़ोन पर टैप करें',id:'Ketuk mikrofon untuk mulai',it:'Tocca il microfono per iniziare',ja:'マイクをタップして開始',ko:'시작하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk mula',fa:'برای شروع روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby rozpocząć',pt:'Toque no microfone para começar',ru:'Нажмите на микрофон, чтобы начать',es:'Toca el micrófono para comenzar',sw:'Gusa maikrofoni kuanza',th:'แตะไมโครโฟนเพื่อเริ่ม',tr:'Başlamak için mikrofona dokunun',uk:'Натисніть на мікрофон, щоб почати',ur:'شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để bắt đầu'};
 function setRingProgress(p){const v=Math.max(0,Math.min(1,p));mic.style.setProperty('--ring-pct',(v*100)+'%');}
 function setMicState(state){const code=sel.value||'en';mic.dataset.state=state;mic.setAttribute('aria-pressed',state==='listening'?'true':'false');mic.setAttribute('aria-label',state==='listening'?((T[code]||T.en).listening||'Recording'):(TAP_HINT[code]||TAP_HINT.en));}
@@ -1565,123 +1438,24 @@ function updateDualState(){
 function speakHebrew(text){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(text);x.lang='he-IL';x.rate=.78;speechSynthesis.speak(x);}
 function renderFinalHebrew(hebrew,source){const code=sel.value||"en",t=T[code]||T.en;hebrew=applyFinalForms(hebrew);const letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined);const hebEl=document.getElementById("hebrew");hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById("resultAudioBtn").onclick=()=>speakHebrew(hebrew);const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();}
 function showChoices(cands){
-  const u=UX[sel.value]||UX.en,box=document.getElementById('choices');cands=[...new Set(cands.map(applyFinalForms).filter(isPlausibleHebrewCandidate))].slice(0,3);
+  const u=UX[sel.value]||UX.en,box=document.getElementById('choices');cands=[...new Set(cands.map(applyFinalForms).filter(isPlausibleHebrewCandidate))].slice(0,24);
   if(!cands.length){box.hidden=true;return;}
   box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+cands.map((h,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(h)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
-  box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';heardText='';box.hidden=true;resultBox.style.display='none';clearStatus();};
+  box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(cands[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakHebrew(cands[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';box.hidden=true;resultBox.style.display='none';clearStatus();};
 }
 
-let recordedTranscriptHebrew="",recordedTranscriptAuto="",recordedTranscriptEnglish="",transcriptionHebrewPromise=null,transcriptionAutoPromise=null,transcriptionEnglishPromise=null,whisperTranscriberPromise=null,recordedAudioSamples=null;
-const WHISPER_MODELS=["onnx-community/whisper-base","onnx-community/whisper-tiny"];
-async function getWhisperTranscriber(){
-  if(!whisperTranscriberPromise){
-    whisperTranscriberPromise=import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1").then(async mod=>{
-      if(mod.env){mod.env.allowLocalModels=false;mod.env.useBrowserCache=true;}
-      let lastErr=null;for(const model of WHISPER_MODELS){try{return await mod.pipeline("automatic-speech-recognition",model);}catch(e){lastErr=e;console.warn('Whisper model fallback',model,e);}}
-      throw lastErr||new Error('whisper-unavailable');
-    }).catch(err=>{whisperTranscriberPromise=null;throw err;});
-  }
-  return whisperTranscriberPromise;
-}
-async function blobTo16kMono(blob){const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error("AudioContext unavailable");const ctx=new Ctx();try{const buf=await ctx.decodeAudioData((await blob.arrayBuffer()).slice(0)),mono=new Float32Array(buf.length);for(let ch=0;ch<buf.numberOfChannels;ch++){const data=buf.getChannelData(ch);for(let i=0;i<buf.length;i++)mono[i]+=data[i]/buf.numberOfChannels;}const sr=buf.sampleRate,target=16000;let data=mono;if(sr!==target){const outLen=Math.max(1,Math.round(mono.length*target/sr)),out=new Float32Array(outLen),ratio=sr/target;for(let i=0;i<outLen;i++){const x=i*ratio,j=Math.floor(x),f=x-j,a=mono[Math.min(j,mono.length-1)],b=mono[Math.min(j+1,mono.length-1)];out[i]=a+(b-a)*f;}data=out;}const threshold=.0035,pad=Math.round(target*.20);let first=0,last=data.length-1;while(first<data.length&&Math.abs(data[first])<threshold)first++;if(first>=data.length)throw new Error("no-speech");while(last>first&&Math.abs(data[last])<threshold)last--;first=Math.max(0,first-pad);last=Math.min(data.length-1,last+pad);return data.slice(first,last+1);}finally{try{await ctx.close()}catch(_e){}}}
-async function getRecordedAudioSamples(){if(recordedAudioSamples)return recordedAudioSamples;if(!recordedAudioBlob)return null;recordedAudioSamples=await blobTo16kMono(recordedAudioBlob);return recordedAudioSamples;}
-async function transcribeRecordedAudio(mode='he'){
-  const cache={he:recordedTranscriptHebrew,auto:recordedTranscriptAuto,en:recordedTranscriptEnglish}[mode];if(cache)return cache;
-  const pending={he:transcriptionHebrewPromise,auto:transcriptionAutoPromise,en:transcriptionEnglishPromise}[mode];if(pending)return pending;if(!recordedAudioBlob)return "";
-  const task=(async()=>{try{
-    statusEl.classList.remove('error-message');statusEl.textContent=(T[sel.value]||T.en).processing||'';
-    const audio=await getRecordedAudioSamples(),timeout=(promise,ms)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error("transcription-timeout")),ms))]),transcriber=await timeout(getWhisperTranscriber(),90000),opts={chunk_length_s:15,stride_length_s:2,task:'transcribe'};
-    if(mode==='he')opts.language='he';if(mode==='en')opts.language='en';
-    const out=await timeout(transcriber(audio,opts),90000),txt=cleanRecognizedName(typeof out==='string'?out:(out&&out.text)||'');
-    if(mode==='he')recordedTranscriptHebrew=txt;else if(mode==='en')recordedTranscriptEnglish=txt;else recordedTranscriptAuto=txt;return txt;
-  }catch(err){console.warn('Local transcription failed',mode,err);return "";}finally{if(mode==='he')transcriptionHebrewPromise=null;else if(mode==='en')transcriptionEnglishPromise=null;else transcriptionAutoPromise=null;}})();
-  if(mode==='he')transcriptionHebrewPromise=task;else if(mode==='en')transcriptionEnglishPromise=task;else transcriptionAutoPromise=task;return task;
-}
-function voiceCandidatesFromHypotheses(hypotheses,limit=72){
-  const buckets=new Map();
-  for(const h of hypotheses){
-    const text=cleanRecognizedName(h&&h.text);if(!text)continue;const sourcePenalty=Number.isFinite(h.penalty)?h.penalty:0,source=String(h.source||'audio');
-    for(const c of generateHebrewNameCandidates(text,72)){
-      if(!isPlausibleHebrewCandidate(c.name))continue;
-      let baseScore=c.score+sourcePenalty-hebrewNamePriorBonus(c.name);
-      if(source.includes('hebrew'))baseScore-=.08;
-      let b=buckets.get(c.name);if(!b){b={name:c.name,bestScore:baseScore,sources:new Set([source]),raw:[{source,text,score:c.score}]};buckets.set(c.name,b);}else{b.bestScore=Math.min(b.bestScore,baseScore);b.sources.add(source);b.raw.push({source,text,score:c.score});}
-    }
-  }
-  const out=[];for(const b of buckets.values()){const consensus=Math.min(.18,Math.max(0,b.sources.size-1)*.075);out.push({name:b.name,score:b.bestScore-consensus,sources:[...b.sources],raw:b.raw});}
-  return out.sort((a,b)=>a.score-b.score||b.sources.length-a.sources.length).slice(0,limit);
-}
-function resolveVoiceFirst(spokenCandidates,typedCandidates,typedRaw='',rawHypotheses=[]){
-  spokenCandidates=spokenCandidates.filter(x=>isPlausibleHebrewCandidate(x.name));if(!spokenCandidates.length)return {kind:'mismatch'};
-  const top=spokenCandidates[0];
-  let rawConfirmation=0;for(const h of rawHypotheses)rawConfirmation=Math.max(rawConfirmation,rawTextSimilarity(typedRaw,h.text));
-  const topTyped=typedCandidates.length?bestTypedSimilarity(top.name,typedCandidates):{similarity:0};
-  /* Voice owns the spelling. Typing may resolve only a genuine acoustic near-tie.
-     This lets דני resolve דאני/דני, while a clear מאיר is not overridden by מהיר. */
-  const typedExact=/^[א-ת׳ ]+$/.test(String(typedRaw||''))?normalizeHebrewName(typedRaw):'';
-  if(typedExact){
-    const hit=spokenCandidates.find(c=>c.name===typedExact),fallbackOnly=top.sources?.every(s=>s==='english-fallback'||s==='auto-secondary'),tieWindow=fallbackOnly?.30:.13;
-    if(hit&&hit.score<=top.score+tieWindow&&hebrewSimilarity(top.name,typedExact)>=.68)return {kind:'result',name:hit.name,confidence:fallbackOnly?'typed-resolves-fallback':'exact-typed-acoustic-near-tie',similarity:1};
-  }
-  if(topTyped.similarity>=.70)return {kind:'result',name:top.name,confidence:'voice+typed',similarity:topTyped.similarity};
-  if(!typedCandidates.length&&rawConfirmation>=.72)return {kind:'result',name:top.name,confidence:'voice+source-script',similarity:rawConfirmation};
-  let bestAlt=null;
-  if(typedCandidates.length){
-    for(const c of spokenCandidates.slice(1,16)){
-      const m=bestTypedSimilarity(c.name,typedCandidates),delta=c.score-top.score;
-      if(m.similarity>=.84&&delta<=.10){const merit=m.similarity-delta*.55;if(!bestAlt||merit>bestAlt.merit)bestAlt={c,m,merit};}
-    }
-  }
-  if(bestAlt)return {kind:'result',name:bestAlt.c.name,confidence:'typed-breaks-acoustic-tie',similarity:bestAlt.m.similarity};
-  const medium=spokenCandidates.slice(0,10).map(c=>{const m=typedCandidates.length?bestTypedSimilarity(c.name,typedCandidates):{similarity:rawConfirmation};return {name:c.name,voiceScore:c.score,similarity:m.similarity,merit:m.similarity-Math.max(0,c.score-top.score)*.40};}).filter(x=>x.similarity>=.54).sort((a,b)=>b.merit-a.merit||a.voiceScore-b.voiceScore);
-  if(medium.length)return {kind:'choices',names:[...new Set([top.name,...medium.map(x=>x.name)])].filter(isPlausibleHebrewCandidate).slice(0,3)};
-  return {kind:'mismatch'};
-}
 async function reconcileName(){
   const typedEl=document.getElementById('typedName'),typed=typedEl.value;if(!recordedAudioBlob||!isValidNameInput(typed))return;clearStatus();const btn=document.getElementById('discoverBtn');btn.disabled=true;
-  const typedCandidates=typedHebrewCandidates(typed,56),browserHyp=recognitionCandidates.map((x,i)=>({text:x.text,source:'browser-hebrew',penalty:.015+i*.01}));
-  /* Pass 1: direct Hebrew decoding from the raw audio. */
-  const hebrew=await transcribeRecordedAudio('he');
-  const hyps=[...browserHyp];if(hebrew)hyps.unshift({text:hebrew,source:'whisper-hebrew',penalty:0});
-  let spoken=voiceCandidatesFromHypotheses(hyps,72),decision=resolveVoiceFirst(spoken,typedCandidates,typed,[]);
-  if(decision.kind==='result'&&decision.similarity>=.78){recordedName=hebrew||heardText;renderFinalHebrew(decision.name,'hebrew-audio-first');updateDualState();return;}
-  /* Pass 2: auto-language transcript is used only as supporting evidence and
-     for source-script confirmation. It does NOT become the target alphabet. */
-  const auto=await transcribeRecordedAudio('auto');const rawHyps=[];if(auto){rawHyps.push({text:auto,source:'auto-source'});hyps.push({text:auto,source:'auto-secondary',penalty:.10});}
-  spoken=voiceCandidatesFromHypotheses(hyps,72);decision=resolveVoiceFirst(spoken,typedCandidates,typed,rawHyps);
-  if(decision.kind==='result'){recordedName=hebrew||auto||heardText;renderFinalHebrew(decision.name,'hebrew-first-crosscheck');updateDualState();return;}
-  /* Pass 3: English/Latin is a LAST fallback only, never the primary decoding
-     space. This path helps names that Whisper preserves phonetically in Latin. */
-  const english=await transcribeRecordedAudio('en');if(english)hyps.push({text:english,source:'english-fallback',penalty:.16});
-  spoken=voiceCandidatesFromHypotheses(hyps,72);decision=resolveVoiceFirst(spoken,typedCandidates,typed,rawHyps);
-  if(decision.kind==='result'){recordedName=hebrew||auto||english||heardText;renderFinalHebrew(decision.name,'hebrew-first-fallback');updateDualState();return;}
-  if(decision.kind==='choices'){showChoices(decision.names);updateDualState();return;}
-  resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;updateDualState();
+  try{
+    statusEl.classList.remove('error-message');statusEl.textContent=(T[sel.value]||T.en).processing||'';
+    const names=await secureNameCandidatesFromHebrew(typed);
+    if(names.length){recordedName=typed;showChoices(names);updateDualState();return;}
+    throw new Error('no-candidates');
+  }catch(err){console.warn('Private Hebrew alternative engine unavailable',err);resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;updateDualState();}
 }
-
-window.__nameEngineNextSelfTest=function(){
-  const cases=[
-    {h:[['דני','whisper-hebrew']],typed:'דני',expected:'דני'},
-    {h:[['דאני','whisper-hebrew'],['Dani','english-fallback']],typed:'דני',expected:'דני'},
-    {h:[['מאיר','whisper-hebrew']],typed:'מאיר',expected:'מאיר'},
-    {h:[['מהיר','whisper-hebrew'],['Meir','english-fallback']],typed:'מאיר',expected:'מאיר'},
-    {h:[['מאיר','whisper-hebrew'],['Meir','english-fallback']],typed:'מהיר',expected:'מאיר'},
-    {h:[['מוזס','whisper-hebrew']],typed:'מוזז',expected:'מוזס'},
-    {h:[['Moses','english-fallback']],typed:'מוזז',expected:'מוזס'},
-    {h:[['אבי','whisper-hebrew']],typed:'אבי',expected:'אבי'},
-    {h:[['דניאלה','whisper-hebrew']],typed:'דניאלה',expected:'דניאלה'},
-    {h:[['בן אל','whisper-hebrew']],typed:'בן אל',expected:'בן אל'},
-    {h:[['מוחמד','whisper-hebrew']],typed:'محمد',raw:[{text:'محمد'}],expected:'מוחמד'},
-    {h:[['מחמאד','whisper-hebrew']],typed:'محمد',raw:[{text:'محمد'}],expected:'מחמאד'},
-    {h:[['משה','whisper-hebrew']],typed:'מאיר',expected:null},
-    {h:[['ם','whisper-hebrew']],typed:'מאיר',expected:null}
-  ];
-  return cases.map(x=>{const hs=x.h.map(([text,source])=>({text,source,penalty:source==='whisper-hebrew'?0:.16})),spoken=voiceCandidatesFromHypotheses(hs,72),typed=typedHebrewCandidates(x.typed,56),d=resolveVoiceFirst(spoken,typed,x.typed,x.raw||[]),actual=d.kind==='result'?d.name:null;return {heard:x.h.map(a=>a[0]),typed:x.typed,expected:x.expected,actual,kind:d.kind,pass:actual===x.expected,top:spoken.slice(0,6).map(c=>c.name)};});
-};
+window.__nameEngineNextSelfTest=()=>({secure:true,clientRulesExposed:false,rawAudioSent:false,textAsrUsed:true,ipaUsed:false,endpoint:V15_API_ENDPOINT});
 window.__inputNextSelfTest=function(){
-  const cases=[
-    ['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],['ג\'ורג\'','ג\'ורג\'',true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]
-  ];
+  const cases=[['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],["ג'ורג'","ג'ורג'",true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]];
   return cases.map(([raw,clean,valid])=>{const got=sanitizeNameInput(raw);return {raw,expectedClean:clean,actualClean:got,expectedValid:valid,actualValid:isValidNameInput(got),pass:got===clean&&isValidNameInput(got)===valid};});
 };
 
@@ -1704,13 +1478,6 @@ function startVoiceActivityMonitor(stream){
 }
 function stopRingAnimation(){if(recRingRaf){cancelAnimationFrame(recRingRaf);recRingRaf=null;}}
 function animateRing(){stopRingAnimation();const tick=()=>{if(!recRecording)return;setRingProgress(Math.min(.96,(performance.now()-recStartedAt)/8000));recRingRaf=requestAnimationFrame(tick);};recRingRaf=requestAnimationFrame(tick);}
-function createRecognition(){
-  if(!SpeechRecognition)return null;const r=new SpeechRecognition();r.lang='he-IL';r.continuous=true;r.interimResults=true;r.maxAlternatives=5;
-  r.onresult=ev=>{let primary='';const fresh=[];for(let i=ev.resultIndex;i<ev.results.length;i++){const res=ev.results[i];if(!res)continue;if(res[0]?.transcript)primary+=(primary?' ':'')+res[0].transcript;for(let j=0;j<Math.min(res.length,5);j++){const alt=res[j];if(alt?.transcript)fresh.push({text:alt.transcript.trim(),confidence:Number.isFinite(alt.confidence)?alt.confidence:0});}}if(primary.trim())heardText=primary.trim();if(fresh.length){const merged=[...recognitionCandidates,...fresh],seen=new Set();recognitionCandidates=merged.filter(x=>{const k=String(x.text||'').toLowerCase().trim();if(!k||seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>b.confidence-a.confidence).slice(0,12);}};
-  r.onerror=()=>{};r.onend=()=>{if(recRecording){try{r.start();return;}catch(_e){}}recognition=null;};return r;
-}
-function startSpeech(){if(recognition||!SpeechRecognition)return;heardText='';recognitionCandidates=[];recognition=createRecognition();try{recognition.start()}catch(_e){recognition=null;}}
-function stopSpeech(){if(!recognition)return;const r=recognition;recognition=null;try{r.stop()}catch(_e){}setTimeout(()=>{try{r.abort()}catch(_e){}},600);}
 async function startAudioCapture(){
   try{
     if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
@@ -1718,7 +1485,7 @@ async function startAudioCapture(){
     mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};
     mediaRecorder.onstop=()=>{
       if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
-      const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioSamples=null;recordedTranscriptHebrew='';recordedTranscriptAuto='';recordedTranscriptEnglish='';transcriptionHebrewPromise=null;transcriptionAutoPromise=null;transcriptionEnglishPromise=null;
+      const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioSamples=null;
       if(blob.size>0){recordedAudioBlob=blob;recordedAudioUrl=URL.createObjectURL(blob);}else{recordedAudioBlob=null;recordedAudioUrl=null;}
       mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;mediaRecorder=null;renderRecordingTools();updateDualState();requestAnimationFrame(updateDualState);
     };
@@ -1727,20 +1494,20 @@ async function startAudioCapture(){
 }
 function stopAudioCapture(){if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}}
 function finishRecording(reason='manual'){
-  if(!recRecording)return;recRecording=false;recStarting=false;if(recStopTimer){clearTimeout(recStopTimer);recStopTimer=null;}stopRingAnimation();stopVoiceActivityMonitor();stopSpeech();setRingProgress(1);mic.classList.remove('listening');setMicState('ready');stopAudioCapture();
+  if(!recRecording)return;recRecording=false;recStarting=false;if(recStopTimer){clearTimeout(recStopTimer);recStopTimer=null;}stopRingAnimation();stopVoiceActivityMonitor();setRingProgress(1);mic.classList.remove('listening');setMicState('ready');stopHebrewRecognition();stopAudioCapture();
 }
 async function beginRecording(e){
   if(recRecording||recStarting)return;e?.preventDefault?.();recStarting=true;recPointerHeld=true;recPressAt=performance.now();recReleaseDuration=null;recPointerId=e?.pointerId??null;if(recPointerId!==null){try{mic.setPointerCapture(recPointerId)}catch(_e){}}
   resetRecording();resultBox.style.display='none';document.getElementById('choices').hidden=true;clearStatus();setRingProgress(0);renderRecordingTools();
   const ok=await startAudioCapture();if(!ok){recStarting=false;recPointerHeld=false;setRingProgress(0);return;}
-  recStarting=false;recRecording=true;recStartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();startSpeech();startVoiceActivityMonitor(mediaStream);setTimeout(()=>getWhisperTranscriber().catch(()=>{}),0);
+  recStarting=false;recRecording=true;recStartedAt=performance.now();startHebrewRecognition();mic.classList.add('listening');setMicState('listening');animateRing();startVoiceActivityMonitor(mediaStream);
   if(recReleaseDuration!==null){if(recReleaseDuration>=1000)setTimeout(()=>finishRecording('release'),30);}
 }
 function releaseRecording(e){
   if(recPointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==recPointerId)return;e?.preventDefault?.();recPointerHeld=false;const duration=Math.max(0,performance.now()-recPressAt);recReleaseDuration=duration;if(recStarting||!recRecording)return;if(duration>=1000)finishRecording('release');
 }
 function resetRecording(){
-  if(recRecording)finishRecording('reset');stopVoiceActivityMonitor();stopSpeech();if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedTranscriptHebrew='';recordedTranscriptAuto='';recordedTranscriptEnglish='';recordedAudioSamples=null;transcriptionHebrewPromise=null;transcriptionAutoPromise=null;transcriptionEnglishPromise=null;recordedName='';heardText='';recognitionCandidates=[];resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);renderRecordingTools();updateDualState();clearStatus();
+  if(recRecording)finishRecording('reset');stopVoiceActivityMonitor();clearHebrewRecognition();if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);renderRecordingTools();updateDualState();clearStatus();
 }
 ensureRecorderLayout();
 mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',e=>{if(recRecording||recStarting)releaseRecording(e);});mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1748,7 +1515,6 @@ const againMain=document.getElementById('again');if(againMain)againMain.onclick=
 const typedInput=document.getElementById("typedName");typedInput.addEventListener("input",e=>{const clean=sanitizeNameInput(e.target.value);if(clean!==e.target.value){const end=clean.length;e.target.value=clean;try{e.target.setSelectionRange(end,end)}catch(_e){}}clearStatus();updateDualState();});typedInput.setAttribute("maxlength","60");
 document.getElementById("discoverBtn").addEventListener("click",()=>{reconcileName().catch(err=>{console.warn(err);updateDualState();});});
 render(detectLang());
-if('requestIdleCallback'in window)requestIdleCallback(()=>getWhisperTranscriber().catch(()=>{}),{timeout:2500});else setTimeout(()=>getWhisperTranscriber().catch(()=>{}),1400);
 
 </script>
 
