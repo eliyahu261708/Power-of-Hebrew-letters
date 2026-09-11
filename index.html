@@ -1045,7 +1045,7 @@ const pron = {
 };
 
 const ui = {
-  he:{name:"עברית",lesson:"שיעור 001",finalNote:"לחלק מהאותיות העבריות יש צורה סופית המשמשת רק בסוף מילה.",watch:"צפו בשיעור הווידאו",back:"חזרה למעלה",title:"האלפבית העברי",letter:"אות עברית",nameh:"שם האות בעברית",gem:"ערך גימטרי",pron:"הגייה",print:"הדפסה",note:"האותיות העבריות ושמותיהן המקוריים נשארים ללא שינוי. ההגייה מוצגת בשפתכם.",footer:"ניתן לשנות את השפה בכל עת.",dir:"rtl"},
+  he:{name:"עברית",lesson:"שיעור 001",finalNote:"לחלק מהאותיות העבריות יש צורה סופית המשמשת רק בסוף מילה.",watch:"צפייה בשיעור הווידאו",back:"חזרה למעלה",title:"האלפבית העברי",letter:"אות עברית",nameh:"שם האות בעברית",gem:"ערך גימטרי",pron:"הגייה",print:"הדפסה",note:"האותיות העבריות ושמותיהן המקוריים נשארים ללא שינוי. ההגייה מוצגת בשפה שנבחרה.",footer:"ניתן לשנות את השפה בכל עת.",dir:"rtl"},
   en:{name:"English",lesson:"LESSON 001",finalNote:"Some Hebrew letters have a final form used only at the end of a word.",watch:"Watch the video lesson",back:"Back to top",title:"Hebrew Alphabet",letter:"Hebrew letter",nameh:"Hebrew name",gem:"Gematria value",pron:"Pronunciation",print:"Print",note:"The Hebrew letters and their original Hebrew names remain unchanged. Pronunciation is shown in your language.",footer:"You can change language at any time."},
   ar:{name:"العربية",lesson:"الدرس 001",finalNote:"لبعض الحروف العبرية شكل نهائي يُستخدم فقط في نهاية الكلمة.",watch:"شاهد درس الفيديو",back:"العودة إلى الأعلى",title:"الأبجدية العبرية",letter:"الحرف العبري",nameh:"الاسم بالعبرية",gem:"القيمة العددية (الجيماتريا)",pron:"النطق",print:"طباعة",note:"تبقى الحروف العبرية وأسماؤها الأصلية بالعبرية كما هي. يظهر النطق بلغتك.",footer:"يمكنك تغيير اللغة في أي وقت.",dir:"rtl"},
   bn:{name:"বাংলা",lesson:"পাঠ 001",finalNote:"কিছু হিব্রু অক্ষরের একটি চূড়ান্ত রূপ আছে, যা শুধু শব্দের শেষে ব্যবহৃত হয়।",watch:"ভিডিও পাঠ দেখুন",back:"উপরে ফিরে যান",title:"হিব্রু বর্ণমালা",letter:"হিব্রু অক্ষর",nameh:"হিব্রু নাম",gem:"জেমাট্রিয়া মান",pron:"উচ্চারণ",print:"প্রিন্ট",note:"হিব্রু অক্ষর ও তাদের মূল হিব্রু নাম অপরিবর্তিত থাকে। উচ্চারণ আপনার ভাষায় দেখানো হয়।",footer:"আপনি যেকোনো সময় ভাষা পরিবর্তন করতে পারেন।"},
@@ -1438,8 +1438,7 @@ document.addEventListener('DOMContentLoaded',function(){
   q('#discoverBtn')?.addEventListener('click',()=>trackSiteEvent('discover_name_clicked'));
 });
 </script>
-</body>
-</html>
+
 <style id="final-nav-stability">
 .page-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;direction:ltr!important;flex-wrap:nowrap!important;width:100%!important}
 .page-nav a{grid-row:1!important;width:auto!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;min-height:54px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.2!important}
@@ -1471,3 +1470,5 @@ document.addEventListener('DOMContentLoaded',function(){
 .alphabet-table-fixed .hebrew-letter .letter-link:hover,.alphabet-table-fixed .hebrew-handwriting .letter-link:hover{color:var(--gold2)!important;text-decoration-thickness:2px!important}
 .alphabet-table-fixed .hebrew-letter .letter-link:active,.alphabet-table-fixed .hebrew-handwriting .letter-link:active{transform:scale(.96)!important}
 </style>
+</body>
+</html>
