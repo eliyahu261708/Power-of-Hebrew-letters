@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- Official release: Version 23 — sound-first lattice, strict cross-check, sound-preserving playback -->
+<!-- Official release: Version 25 — clean sound-first engine and single-pass recording -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ThePowerOfHebrew — My Name in Hebrew — v23</title>
+<title>ThePowerOfHebrew — My Name in Hebrew — v26</title>
 <style>
 
   :root{
@@ -949,21 +949,8 @@ table{
   }
 }
 </style>
-<style id="voice-three-nav-fixed">
-.page-nav{direction:ltr!important;display:grid!important;grid-template-columns:repeat(3,var(--shared-nav-width))!important;justify-content:end!important;gap:var(--shared-nav-gap)!important;width:100%!important}
-.page-nav #navName{grid-column:1!important;grid-row:1!important}.page-nav #navMeaning{grid-column:2!important;grid-row:1!important}.page-nav #navAlpha{grid-column:3!important;grid-row:1!important}
-.page-nav a{width:var(--shared-nav-width)!important;min-width:var(--shared-nav-width)!important;max-width:var(--shared-nav-width)!important;min-height:52px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important}
-@media(max-width:700px){.page-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.page-nav a{width:100%!important;min-width:0!important;max-width:none!important}}
-.voice-youtube-area{margin-top:18px;text-align:center}.voice-youtube-link{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);border:1px solid #9f8238;background:var(--card2);padding:11px 16px;border-radius:12px;font-size:17px;font-weight:700}.voice-youtube-link:hover{border-color:var(--gold2);color:var(--gold2)}
-</style>
-<style id="qa-final-fixes">
-.page-nav{display:grid!important;grid-template-columns:repeat(3,minmax(210px,210px))!important;gap:10px!important;justify-content:center!important;direction:ltr!important}
-.page-nav a{width:210px!important;min-width:210px!important;max-width:210px!important;box-sizing:border-box!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-.word-row{display:grid!important;grid-template-columns:44px minmax(120px,1fr) minmax(120px,1fr)!important;align-items:center!important;direction:ltr!important}
-.word-row .play-btn{grid-column:1!important}.word-row .translation{grid-column:2!important;text-align:left!important;direction:auto!important}.word-row .he-word{grid-column:3!important;text-align:right!important;direction:rtl!important}
-.letter-content{margin-top:12px;line-height:1.8;white-space:normal}.letter-content p{margin:0 0 10px}.he-word,.hebrew-letter,.hebrew-name{cursor:pointer}
-@media(max-width:760px){.page-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.page-nav a{width:auto!important;min-width:0!important;max-width:none!important;font-size:12px!important}.word-row{grid-template-columns:40px 1fr 1fr!important}}
-</style>
+
+
 <style>.name-letter-char,.name-letter-info{color:inherit;text-decoration:none;cursor:pointer}.name-letter-char:hover,.name-letter-info:hover{text-decoration:underline}</style><style id="dual-name-ux">
 .dual-inputs{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;margin:18px 0}.required-field{border:1px solid #4b4f58;border-radius:16px;padding:16px;background:rgba(255,255,255,.025);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:170px}.field-label{font-weight:800;margin-bottom:10px;text-align:center}.name-input{width:min(360px,92%);height:48px;border-radius:12px;border:1px solid #8d793e;background:#11151c;color:#fff;padding:0 14px;font-size:20px;text-align:center;box-sizing:border-box}.field-check{min-height:24px;margin-top:8px;font-weight:700}.discover-btn{display:block;margin:16px auto 8px;min-height:52px;padding:10px 24px;border-radius:14px;border:1px solid #b89a4d;font-size:18px;font-weight:900;cursor:pointer}.discover-btn:disabled{opacity:.38;cursor:not-allowed}.choices{margin:18px auto;max-width:620px;border:1px solid #66572e;border-radius:14px;padding:16px}.choice-grid{display:grid;gap:10px;margin-top:12px}.choice{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border:1px solid #555;border-radius:12px;padding:12px;background:#171b22}.choice-main{cursor:pointer;text-align:center}.choice-he{font-size:30px;font-weight:900;direction:rtl}.choice-hint{font-size:14px;color:#aeb5c0}.choice-audio{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;padding:0;font-size:19px;cursor:pointer}.sub{max-width:820px!important;line-height:1.65!important}.mic{touch-action:none}
 @media(max-width:760px){.dual-inputs{grid-template-columns:1fr}.required-field{min-height:145px}.discover-btn{width:100%}}
@@ -976,31 +963,56 @@ gtag('js',new Date());gtag('config','G-DWPQ52DCDY',{'anonymize_ip':true});
 window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}catch(e){}};
 </script>
 
-<style id="v3-final-fixes">
-/* V3 fixed navigation: stable slots, two centered lines on mobile */
-.nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;align-items:stretch!important}
-.nav a{display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.22!important;min-height:58px!important;padding:8px 10px!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
-@media(max-width:700px){.nav{gap:6px!important}.nav a{font-size:13px!important;min-height:64px!important;padding:7px 5px!important}}
-/* Remove every legacy globe trigger/container, including empty shell */
-.globe-btn,.language-globe,.lang-globe,#languageGlobe,#globeBtn,.globe-button{display:none!important;width:0!important;height:0!important;margin:0!important;padding:0!important;border:0!important}
-/* Recording + typing are one visual process */
-.dual-inputs{overflow:visible!important}
-#hold{display:none!important}
-#status{position:static!important;display:block!important;min-height:24px!important;margin:10px auto 0!important;line-height:1.35!important}
-#status.error-message{color:#ff5d5d!important;font-weight:700!important}
-</style>
 
-<style id="next-release-nav-active">
-.page-nav a{font-weight:800!important}
-.page-nav a.active{
-  border:1px solid #9f8238!important;
-  background:linear-gradient(180deg,var(--gold2),var(--gold))!important;
-  color:#111!important;
-  font-weight:800!important;
-  box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.20)!important;
+
+
+<script src="engine-config.js"></script>
+
+
+<style id="qa-content-layout-base">
+.word-row{display:grid!important;grid-template-columns:44px minmax(120px,1fr) minmax(120px,1fr)!important;align-items:center!important;direction:ltr!important}
+.word-row .play-btn{grid-column:1!important}.word-row .translation{grid-column:2!important;text-align:left!important;direction:auto!important}.word-row .he-word{grid-column:3!important;text-align:right!important;direction:rtl!important}
+.letter-content{margin-top:12px;line-height:1.8;white-space:normal}.letter-content p{margin:0 0 10px}.he-word,.hebrew-letter,.hebrew-name{cursor:pointer}
+@media(max-width:760px){.word-row{grid-template-columns:40px 1fr 1fr!important}}
+</style>
+<style id="voice-ui-base">
+.voice-youtube-area{margin-top:18px;text-align:center}.voice-youtube-link{display:inline-flex;align-items:center;gap:9px;text-decoration:none;color:var(--text);border:1px solid #9f8238;background:var(--card2);padding:11px 16px;border-radius:12px;font-size:17px;font-weight:700}.voice-youtube-link:hover{border-color:var(--gold2);color:var(--gold2)}
+.globe-btn,.language-globe,.lang-globe,#languageGlobe,#globeBtn,.globe-button{display:none!important;width:0!important;height:0!important;margin:0!important;padding:0!important;border:0!important}
+.dual-inputs{overflow:visible!important}#hold{display:none!important}#status{position:static!important;display:block!important;min-height:24px!important;margin:10px auto 0!important;line-height:1.35!important}#status.error-message{color:#ff5d5d!important;font-weight:700!important}
+</style>
+<style id="site-navigation-base">
+/* Shared three-page navigation. Long labels wrap; nothing is clipped on mobile. */
+.page-nav,.nav{
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,210px))!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+  gap:10px!important;
+  width:100%!important;
+}
+.page-nav #navName,.nav #navName{grid-column:1!important}
+.page-nav #navMeaning,.nav #navMeaning{grid-column:2!important}
+.page-nav #navAlpha,.nav #navAlpha{grid-column:3!important}
+.page-nav a,.nav a{
+  grid-row:1!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  text-align:center!important;font-weight:800!important;line-height:1.18!important;
+  min-height:58px!important;height:auto!important;max-height:none!important;padding:9px 10px!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;hyphens:auto!important;
+}
+.page-nav a *,.nav a *{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
+.page-nav a.active,.nav a.active{
+  border:1px solid #9f8238!important;background:linear-gradient(180deg,var(--gold2),var(--gold))!important;
+  color:#111!important;box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.20)!important;
+}
+@media(max-width:760px){
+  .page-nav,.nav{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;}
+  .page-nav a,.nav a{font-size:clamp(9.5px,2.75vw,12px)!important;line-height:1.12!important;min-height:64px!important;padding:7px 3px!important;}
 }
 </style>
-<script src="engine-config.js"></script>
 </head>
 <body>
 
@@ -1093,7 +1105,7 @@ function render(code){
   document.documentElement.lang=code; document.documentElement.dir=LANGS[code].dir;
   sel.value=code; current.innerHTML=flag(code)+'<span>'+LANGS[code].name+'</span>';
   menu.querySelectorAll(".custom-lang-item").forEach(x=>x.classList.toggle("active",x.dataset.value===code));
-  document.title="ThePowerOfHebrew — My Name in Hebrew"; document.getElementById("brandEyebrow").textContent="ThePowerOfHebrew"; pageTitle.textContent=t.title; sub.textContent=t.sub; hold.textContent=""; statusEl.textContent="";
+  document.title="ThePowerOfHebrew — My Name in Hebrew"; document.getElementById("brandEyebrow").textContent="ThePowerOfHebrew"; pageTitle.textContent=t.title; sub.textContent=t.sub; hold.textContent=(TAP_HINT[code]||TAP_HINT.en); statusEl.textContent="";
   navAlpha.textContent=t.navAlpha; navName.textContent=t.navName; if(window.MEANING_NAV&&navMeaning)navMeaning.textContent=MEANING_NAV[code]||MEANING_NAV.he; if(window.YOUTUBE_LABELS&&youtubeChannelText)youtubeChannelText.textContent=YOUTUBE_LABELS[code]||YOUTUBE_LABELS.he; resultLabel.textContent=t.result;
   again.textContent=t.again; foot.textContent=(typeof TAP_HINT!=="undefined"?(TAP_HINT[code]||TAP_HINT.en):""); setMicState("ready");
   const u=UX[code]||UX.en; if(u.introHtml){sub.innerHTML=u.introHtml;}else{sub.textContent=u.intro;} document.getElementById("recordLabel").textContent=u.record; document.getElementById("typeLabel").textContent=u.type; document.getElementById("typedName").placeholder=u.ph; document.getElementById("discoverBtn").textContent=u.go; updateDualState();
@@ -1330,108 +1342,31 @@ function isValidNameInput(value){
   return validContextualFinals(v)&&v.split(' ').every(w=>[...w].some(c=>/\p{L}/u.test(c)));
 }
 
-/* Version 23 — THE RECORDED AUDIO IS THE PRIMARY SOURCE.
-   The short recording is sent to the private Cloudflare Worker, where server-side
-   speech recognition produces one Hebrew source spelling. Typed text is only a
-   secondary cross-check/ranking hint and can never seed a candidate. The private
-   Hebrew-alternative rules remain on the Worker. Browser SpeechRecognition is no
-   longer part of the primary path, which makes mobile and desktop behavior equal. */
-const V20_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
-const V20_API_ENDPOINT=V20_API_BASE+'/api/name-candidates';
-let hebrewRecognition=null,hebrewRecognitionEnded=true,hebrewRecognitionHypotheses=[],hebrewRecognitionError='';
-function recognitionCtor(){return window.SpeechRecognition||window.webkitSpeechRecognition||null;}
-function addRecognitionHypothesis(value,priority=0,confidence=0){
-  const n=normalizeHebrewName(value);if(!n||n.replace(/ /g,'').length<2)return;
-  const old=hebrewRecognitionHypotheses.find(x=>x.text===n);
-  if(old){old.priority=Math.min(old.priority,priority);old.confidence=Math.max(old.confidence||0,confidence||0);return;}
-  hebrewRecognitionHypotheses.push({text:n,priority,confidence:Number(confidence)||0});
-  hebrewRecognitionHypotheses.sort((a,b)=>a.priority-b.priority||(b.confidence||0)-(a.confidence||0)||a.text.length-b.text.length||a.text.localeCompare(b.text,'he'));
-  hebrewRecognitionHypotheses=hebrewRecognitionHypotheses.slice(0,3);
-}
-function startHebrewRecognition(){
-  const Ctor=recognitionCtor();hebrewRecognitionHypotheses=[];hebrewRecognitionError='';hebrewRecognitionEnded=true;
-  if(!Ctor){hebrewRecognitionError='unsupported';return false;}
-  try{
-    const r=new Ctor();hebrewRecognition=r;hebrewRecognitionEnded=false;r.lang='he-IL';r.continuous=false;r.interimResults=false;r.maxAlternatives=1;
-    r.onresult=e=>{
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const row=e.results[i];if(!row.isFinal)continue;
-        for(let j=0;j<Math.min(row.length,3);j++)addRecognitionHypothesis(row[j].transcript,j,row[j].confidence||0);
-      }
-    };
-    r.onerror=e=>{hebrewRecognitionError=String(e?.error||'recognition-error');};
-    r.onend=()=>{hebrewRecognitionEnded=true;hebrewRecognition=null;};
-    r.start();return true;
-  }catch(e){hebrewRecognitionError='start-failed';hebrewRecognitionEnded=true;hebrewRecognition=null;return false;}
-}
-function stopHebrewRecognition(){const r=hebrewRecognition;if(!r)return;try{r.stop()}catch(_e){try{r.abort()}catch(__e){}}}
-async function waitForHebrewRecognition(maxMs=1600){const until=performance.now()+maxMs;while(!hebrewRecognitionEnded&&performance.now()<until)await new Promise(r=>setTimeout(r,60));}
-function clearHebrewRecognition(){try{hebrewRecognition?.abort()}catch(_e){}hebrewRecognition=null;hebrewRecognitionEnded=true;hebrewRecognitionHypotheses=[];hebrewRecognitionError='';}
+/* Version 26 — clean recording/client path.
+   One recording -> one private server transcription -> sound-based cross-check -> candidates.
+   No browser SpeechRecognition, no second ASR pass, no client audio conversion. */
+const V26_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
+const V26_API_ENDPOINT=V26_API_BASE+'/api/name-candidates';
+
 function isPlausibleHebrewCandidate(name){
   const n=normalizeHebrewName(name);if(!n)return false;
   return n.split(/\s+/).every(w=>[...w].filter(c=>/[א-ת]/.test(c)).length>=2)&&validContextualFinals(n);
 }
-async function secureNameCandidatesFromHebrew(typed){
-  await waitForHebrewRecognition();
-  const heard=[...new Set(hebrewRecognitionHypotheses.map(x=>x.text).filter(isPlausibleHebrewCandidate))].slice(0,3);
-  if(!heard.length)throw new Error(hebrewRecognitionError||'no-hebrew-recognition');
-  if(!V20_API_BASE||/REPLACE/i.test(V20_API_BASE))throw new Error('engine-not-configured');
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
-  try{
-    const res=await fetch(V20_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json','X-TPH-Client':'v23-audio'},body:JSON.stringify({heard,typed:String(typed||'').slice(0,80)}),signal:controller.signal});
-    if(!res.ok)throw new Error('secure-engine-'+res.status);
-    const data=await res.json();
-    const records=Array.isArray(data.candidates)?data.candidates.map(x=>{
-      if(typeof x==='string')return {spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)};
-      return {spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')};
-    }).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,24):[];
-    return {candidates:records,heard,crossCheck:data.crossCheck||{used:false,mismatch:false}};
-  }finally{clearTimeout(timer);}
-}
 
-function encodePcm16Wav(samples,sampleRate=16000){
-  const buffer=new ArrayBuffer(44+samples.length*2),view=new DataView(buffer);
-  const write=(off,text)=>{for(let i=0;i<text.length;i++)view.setUint8(off+i,text.charCodeAt(i));};
-  write(0,'RIFF');view.setUint32(4,36+samples.length*2,true);write(8,'WAVE');write(12,'fmt ');
-  view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);
-  view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);write(36,'data');view.setUint32(40,samples.length*2,true);
-  let o=44;for(let i=0;i<samples.length;i++,o+=2){const x=Math.max(-1,Math.min(1,samples[i]));view.setInt16(o,x<0?x*0x8000:x*0x7fff,true);}return buffer;
-}
-function resampleMonoLinear(input,fromRate,toRate=16000){
-  if(fromRate===toRate)return input;const outLen=Math.max(1,Math.round(input.length*toRate/fromRate)),out=new Float32Array(outLen),ratio=fromRate/toRate;
-  for(let i=0;i<outLen;i++){const pos=i*ratio,a=Math.floor(pos),b=Math.min(a+1,input.length-1),f=pos-a;out[i]=(input[a]||0)*(1-f)+(input[b]||0)*f;}return out;
-}
-async function recordingBlobForRecognition(blob){
-  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return blob;
-  let ctx=null;try{
-    ctx=new Ctx();const raw=await blob.arrayBuffer(),decoded=await ctx.decodeAudioData(raw.slice(0)),mono=new Float32Array(decoded.length);
-    for(let c=0;c<decoded.numberOfChannels;c++){const ch=decoded.getChannelData(c);for(let i=0;i<mono.length;i++)mono[i]+=ch[i]/decoded.numberOfChannels;}
-    const samples=resampleMonoLinear(mono,decoded.sampleRate,16000),wav=encodePcm16Wav(samples,16000);return new Blob([wav],{type:'audio/wav'});
-  }catch(_e){return blob;}finally{try{await ctx?.close?.()}catch(_e){}}
-}
-async function secureNameCandidatesFromAudio(typed){
-  if(!recordedAudioBlob)throw new Error('audio-required');
-  if(!V20_API_BASE||/REPLACE/i.test(V20_API_BASE))throw new Error('engine-not-configured');
-  const audio=await recordingBlobForRecognition(recordedAudioBlob),form=new FormData();
-  form.append('audio',audio,audio.type==='audio/wav'?'name.wav':'name-audio');form.append('typed',String(typed||'').slice(0,80));
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
-  try{
-    const res=await fetch(V20_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json','X-TPH-Client':'v23-audio'},body:form,signal:controller.signal});
-    let data=null;try{data=await res.json();}catch(_e){}
-    if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
-    const records=Array.isArray(data?.candidates)?data.candidates.map(x=>typeof x==='string'?{spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)}:{spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')}).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,12):[];
-    if(!records.length)throw new Error('no-candidates');
-    return {candidates:records,heard:Array.isArray(data?.heard)?data.heard:[],crossCheck:data?.crossCheck||{used:false,mismatch:false},recognition:data?.recognition||'server-audio'};
-  }finally{clearTimeout(timer);}
-}
-
-const mic=document.getElementById("mic"), statusEl=document.getElementById("status"), resultBox=document.getElementById("resultBox");
+const mic=document.getElementById('mic'),statusEl=document.getElementById('status'),resultBox=document.getElementById('resultBox');
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
+let recordState='idle',recordStartedAt=0,releaseRequested=false,recordMaxTimer=null,ringRaf=null,pointerId=null;
 
-const TAP_HINT={he:'נא ללחוץ על המיקרופון כדי להקליט',en:'Tap the microphone to begin',ar:'اضغط على الميكروفون للبدء',bn:'শুরু করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风开始',nl:'Tik op de microfoon om te beginnen',fil:'I-tap ang mikropono para magsimula',fr:'Touchez le microphone pour commencer',de:'Tippe auf das Mikrofon, um zu beginnen',el:'Πατήστε το μικρόφωνο για να ξεκινήσετε',hi:'शुरू करने के लिए माइक्रोफ़ोन पर टैप करें',id:'Ketuk mikrofon untuk mulai',it:'Tocca il microfono per iniziare',ja:'マイクをタップして開始',ko:'시작하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk mula',fa:'برای شروع روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby rozpocząć',pt:'Toque no microfone para começar',ru:'Нажмите на микрофон, чтобы начать',es:'Toca el micrófono para comenzar',sw:'Gusa maikrofoni kuanza',th:'แตะไมโครโฟนเพื่อเริ่ม',tr:'Başlamak için mikrofona dokunun',uk:'Натисніть на мікрофон, щоб почати',ur:'شروع کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để bắt đầu'};
+const TAP_HINT={he:'לחץ והחזק את המיקרופון כדי להקליט',en:'Press and hold the microphone to record',ar:'اضغط مطولاً على الميكروفون للتسجيل',bn:'রেকর্ড করতে মাইক্রোফোন চেপে ধরে রাখুন',zh:'按住麦克风进行录音',nl:'Houd de microfoon ingedrukt om op te nemen',fil:'Pindutin at hawakan ang mikropono para mag-record',fr:'Maintenez le microphone enfoncé pour enregistrer',de:'Mikrofon gedrückt halten, um aufzunehmen',el:'Κρατήστε πατημένο το μικρόφωνο για εγγραφή',hi:'रिकॉर्ड करने के लिए माइक्रोफ़ोन दबाकर रखें',id:'Tekan dan tahan mikrofon untuk merekam',it:'Tieni premuto il microfono per registrare',ja:'マイクを長押しして録音',ko:'녹음하려면 마이크를 길게 누르세요',ms:'Tekan dan tahan mikrofon untuk merakam',fa:'برای ضبط، میکروفون را نگه دارید',pl:'Przytrzymaj mikrofon, aby nagrać',pt:'Pressione e segure o microfone para gravar',ru:'Нажмите и удерживайте микрофон для записи',es:'Mantén pulsado el micrófono para grabar',sw:'Bonyeza na ushikilie maikrofoni kurekodi',th:'กดไมโครโฟนค้างไว้เพื่อบันทึก',tr:'Kaydetmek için mikrofona basılı tutun',uk:'Натисніть і утримуйте мікрофон для запису',ur:'ریکارڈ کرنے کے لیے مائیکروفون دبا کر رکھیں',vi:'Nhấn và giữ micrô để ghi âm'};
+
 function setRingProgress(p){const v=Math.max(0,Math.min(1,p));mic.style.setProperty('--ring-pct',(v*100)+'%');}
 function setMicState(state){const code=sel.value||'en';mic.dataset.state=state;mic.setAttribute('aria-pressed',state==='listening'?'true':'false');mic.setAttribute('aria-label',state==='listening'?((T[code]||T.en).listening||'Recording'):(TAP_HINT[code]||TAP_HINT.en));}
 function clearStatus(){statusEl.classList.remove('error-message');statusEl.textContent='';}
+function stopTracks(){try{mediaStream?.getTracks().forEach(t=>t.stop())}catch(_e){}mediaStream=null;}
+function stopRing(){if(ringRaf){cancelAnimationFrame(ringRaf);ringRaf=null;}}
+function animateRing(){stopRing();const tick=()=>{if(recordState!=='recording')return;setRingProgress(Math.min(.96,(performance.now()-recordStartedAt)/10000));ringRaf=requestAnimationFrame(tick);};ringRaf=requestAnimationFrame(tick);}
+function clearRecordTimer(){if(recordMaxTimer){clearTimeout(recordMaxTimer);recordMaxTimer=null;}}
+
 function recorderButtonMarkup(id,kind,label){
   const icon=kind==='play'?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 5a7 7 0 1 1-6.32 4H3l3.5-3.5L10 9H7.72A5 5 0 1 0 12 7V5z"/></svg>';
   return '<button type="button" id="'+id+'" class="recorder-tool" disabled>'+icon+'<span>'+escapeHtml(label)+'</span></button>';
@@ -1439,170 +1374,119 @@ function recorderButtonMarkup(id,kind,label){
 function ensureRecorderLayout(){
   const first=document.querySelector('.dual-inputs .required-field:first-child'),check=document.getElementById('recordCheck');if(!first||!mic||!check)return;
   let row=document.getElementById('recorderActionRow');
-  if(!row){row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';const stack=document.createElement('div');stack.className='recorder-mic-stack';stack.appendChild(mic);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);}else{const stack=row.querySelector('.recorder-mic-stack');if(stack&&mic.parentNode!==stack)stack.appendChild(mic);}
+  if(!row){row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';const stack=document.createElement('div');stack.className='recorder-mic-stack';stack.appendChild(mic);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);}
+  else{const stack=row.querySelector('.recorder-mic-stack');if(stack&&mic.parentNode!==stack)stack.appendChild(mic);}
   if(check.parentNode!==first)first.appendChild(check);renderRecordingTools();
 }
 function renderRecordingTools(){
-  const box=document.getElementById('recordingTools');if(!box)return;const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en,enabled=!!recordedAudioBlob&&!mediaRecorder;
+  const box=document.getElementById('recordingTools');if(!box)return;const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en,enabled=!!recordedAudioBlob&&recordState==='idle';
   box.hidden=false;box.innerHTML=recorderButtonMarkup('playRecording','play',vm.listen)+recorderButtonMarkup('recordAgain','again',vm.again);
   const play=document.getElementById('playRecording'),againBtn=document.getElementById('recordAgain');play.disabled=!enabled;againBtn.disabled=!enabled;
   play.onclick=()=>{if(recordedAudioUrl&&!play.disabled)new Audio(recordedAudioUrl).play().catch(()=>{});};againBtn.onclick=()=>{if(!againBtn.disabled)resetRecording();};
 }
 function setSuccessCheck(el,label){el.textContent='';const clean=String(label||'').replace(/✓/g,'').trim(),mark=document.createElement('span'),text=document.createElement('span');mark.className='success-check';mark.textContent='✓';text.className='check-label';text.textContent=clean;el.appendChild(mark);el.appendChild(text);}
 function updateDualState(){
-  const u=UX[sel.value]||UX.en,typedEl=document.getElementById('typedName'),typed=typedEl.value,validTyped=isValidNameInput(typed),hasRecording=!!recordedAudioBlob;
+  const u=UX[sel.value]||UX.en,typedEl=document.getElementById('typedName'),validTyped=isValidNameInput(typedEl.value),hasRecording=!!recordedAudioBlob;
   const rc=document.getElementById('recordCheck'),tc=document.getElementById('typeCheck');rc.textContent='';tc.textContent='';if(hasRecording){setSuccessCheck(rc,u.recorded);setRingProgress(1);}if(validTyped)setSuccessCheck(tc,u.typed);
-  const go=document.getElementById('discoverBtn');go.disabled=!(hasRecording&&validTyped);go.classList.toggle('ready',hasRecording&&validTyped);renderRecordingTools();
+  const go=document.getElementById('discoverBtn');go.disabled=!(hasRecording&&validTyped&&recordState==='idle');go.classList.toggle('ready',!go.disabled);renderRecordingTools();
 }
+
 function preferredHebrewVoice(){
-  if(!('speechSynthesis'in window))return null;
-  const vs=(speechSynthesis.getVoices?.()||[]).filter(v=>/^he(?:-|$)/i.test(v.lang||''));
-  if(!vs.length)return null;
-  const score=v=>{const n=(v.name||'').toLowerCase();let s=0;if(/hila|הילה/.test(n))s+=100;if(/female|woman|zira|zira desktop/.test(n))s+=40;if(/microsoft|google|natural|neural|premium|enhanced/.test(n))s+=15;if(/avri|male|man/.test(n))s-=30;return s};
+  if(!('speechSynthesis'in window))return null;const vs=(speechSynthesis.getVoices?.()||[]).filter(v=>/^he(?:-|$)/i.test(v.lang||''));if(!vs.length)return null;
+  const score=v=>{const n=(v.name||'').toLowerCase();let s=0;if(/hila|הילה/.test(n))s+=100;if(/female|woman|zira/.test(n))s+=40;if(/microsoft|google|natural|neural|premium|enhanced/.test(n))s+=15;if(/avri|male|man/.test(n))s-=30;return s};
   return vs.sort((a,b)=>score(b)-score(a))[0]||null;
 }
 function candidatePlaybackError(){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).speechError||'Playback unavailable';}
 function speakCandidate(candidate){
-  const pronunciation=String(candidate?.pronunciation||candidate?.spelling||'').trim();
-  if(!pronunciation||!('speechSynthesis'in window)){candidatePlaybackError();return;}
-  try{
-    speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(pronunciation),voice=preferredHebrewVoice();
-    x.lang='he-IL';if(voice)x.voice=voice;x.rate=.72;x.pitch=1;x.volume=1;
-    x.onerror=()=>candidatePlaybackError();speechSynthesis.speak(x);
-  }catch(_e){candidatePlaybackError();}
+  const pronunciation=String(candidate?.pronunciation||candidate?.spelling||'').trim();if(!pronunciation||!('speechSynthesis'in window)){candidatePlaybackError();return;}
+  try{speechSynthesis.cancel();const x=new SpeechSynthesisUtterance(pronunciation),voice=preferredHebrewVoice();x.lang='he-IL';if(voice)x.voice=voice;x.rate=.72;x.pitch=1;x.volume=1;x.onerror=()=>candidatePlaybackError();speechSynthesis.speak(x);}catch(_e){candidatePlaybackError();}
 }
-function renderFinalHebrew(candidate,source){
-  const code=sel.value||"en",t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,pronunciation:candidate}:candidate;
-  const hebrew=applyFinalForms(record.spelling||''),letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined),hebEl=document.getElementById("hebrew");
+
+function renderFinalHebrew(candidate){
+  const code=sel.value||'en',t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,pronunciation:candidate}:candidate;
+  const hebrew=applyFinalForms(record.spelling||''),letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined),hebEl=document.getElementById('hebrew');
   hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';
-  document.getElementById("resultAudioBtn").onclick=()=>speakCandidate({...record,spelling:hebrew});
+  document.getElementById('resultAudioBtn').onclick=()=>speakCandidate({...record,spelling:hebrew});
   const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');
-  document.getElementById("details").innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();
+  document.getElementById('details').innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();
 }
-function showChoices(records,crossCheck){
+function showChoices(records){
   const u=UX[sel.value]||UX.en,box=document.getElementById('choices'),seen=new Set();
   records=(records||[]).map(x=>typeof x==='string'?{spelling:x,pronunciation:x}:x).map(x=>({spelling:applyFinalForms(x.spelling||''),pronunciation:String(x.pronunciation||x.spelling||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&!seen.has(x.spelling)&&seen.add(x.spelling)).slice(0,24);
   if(!records.length){box.hidden=true;return;}
-  const mismatch=crossCheck?.mismatch?'<div class="error-message" style="margin-bottom:10px">'+escapeHtml((V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch)+'</div>':'';
-  box.innerHTML=mismatch+'<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+records.map((r,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(r.spelling)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
+  box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+records.map((r,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(r.spelling)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
   box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(records[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakCandidate(records[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>{recordedName='';box.hidden=true;resultBox.style.display='none';clearStatus();};
 }
-async function reconcileName(){
-  const typedEl=document.getElementById('typedName'),typed=typedEl.value;if(!recordedAudioBlob||!isValidNameInput(typed))return;clearStatus();const btn=document.getElementById('discoverBtn');btn.disabled=true;
-  try{
-    statusEl.classList.remove('error-message');statusEl.textContent=(T[sel.value]||T.en).processing||'';
-    const result=await secureNameCandidatesFromAudio(typed),records=result.candidates||[];
-    if(records.length){recordedName=result.heard?.[0]||'';showChoices(records,result.crossCheck);updateDualState();return;}
-    throw new Error('no-candidates');
-  }catch(err){
-    console.warn('Private audio name engine unavailable',err);resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');
-    if(code==='cross-check-mismatch')statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;
-    else statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();
-  }
-}
-window.__nameEngineNextSelfTest=()=>({version:23,secure:true,clientRulesExposed:false,rawAudioSent:true,serverAudioAsr:true,browserSpeechRecognitionPrimary:false,ipaUsed:false,typedCanSeedCandidates:false,typedSentToPrivateEngine:true,recordingPrimary:true,typedCrossCheck:true,separatePronunciation:true,endpoint:V20_API_ENDPOINT});
-window.__inputNextSelfTest=function(){
-  const cases=[['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],["ג'ורג'","ג'ורג'",true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]];
-  return cases.map(([raw,clean,valid])=>{const got=sanitizeNameInput(raw);return {raw,expectedClean:clean,actualClean:got,expectedValid:valid,actualValid:isValidNameInput(got),pass:got===clean&&isValidNameInput(got)===valid};});
-};
 
-/* ---------- Recording: fast VAD + one-second silence auto-stop ---------- */
-let vadCtx=null,vadAnalyser=null,vadSource=null,vadTimer=null,vadSpeechSeen=false,vadSpeechStartedAt=0,vadLastVoiceAt=0,vadNoiseFloor=.006,vadVoiceFrames=0;
-let recRecording=false,recStarting=false,recStartedAt=0,recPressAt=0,recReleaseDuration=null,recStopTimer=null,recRingRaf=null,recPointerId=null,recPointerHeld=false;
-function stopVoiceActivityMonitor(){if(vadTimer){clearInterval(vadTimer);vadTimer=null;}try{vadSource?.disconnect()}catch(_e){}try{vadAnalyser?.disconnect()}catch(_e){}if(vadCtx){try{vadCtx.close()}catch(_e){}}vadCtx=null;vadAnalyser=null;vadSource=null;}
-function startVoiceActivityMonitor(stream){
-  stopVoiceActivityMonitor();const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;try{vadCtx=new Ctx();vadAnalyser=vadCtx.createAnalyser();vadAnalyser.fftSize=1024;vadSource=vadCtx.createMediaStreamSource(stream);vadSource.connect(vadAnalyser);const data=new Float32Array(vadAnalyser.fftSize);vadSpeechSeen=false;vadSpeechStartedAt=0;vadLastVoiceAt=0;vadNoiseFloor=.006;vadVoiceFrames=0;
-    vadTimer=setInterval(()=>{if(!recRecording||!vadAnalyser)return;vadAnalyser.getFloatTimeDomainData(data);let sum=0;for(const v of data)sum+=v*v;const rms=Math.sqrt(sum/data.length),elapsed=performance.now()-recStartedAt,threshold=Math.max(.012,vadNoiseFloor*2.8+.0035),voice=rms>threshold;
-      /* Learn the room only from frames that are already below the speech threshold.
-         This prevents a user who speaks immediately from being learned as noise. */
-      if(!vadSpeechSeen&&elapsed<500&&!voice)vadNoiseFloor=vadNoiseFloor*.82+rms*.18;
-      if(voice){vadVoiceFrames++;if(vadVoiceFrames>=2){if(!vadSpeechSeen){vadSpeechSeen=true;vadSpeechStartedAt=performance.now();}vadLastVoiceAt=performance.now();}}else vadVoiceFrames=Math.max(0,vadVoiceFrames-1);
-      if(vadSpeechSeen&&performance.now()-vadLastVoiceAt>=1000&&performance.now()-vadSpeechStartedAt>=280){finishRecording('silence');return;}
-      if(!recPointerHeld&&!vadSpeechSeen&&elapsed>=8000){finishRecording('timeout');return;}
-      if(!recPointerHeld&&vadSpeechSeen&&elapsed>=12000){finishRecording('timeout');return;}
-    },50);
-  }catch(_e){stopVoiceActivityMonitor();}
-}
-function stopRingAnimation(){if(recRingRaf){cancelAnimationFrame(recRingRaf);recRingRaf=null;}}
-function animateRing(){stopRingAnimation();const tick=()=>{if(!recRecording)return;setRingProgress(Math.min(.96,(performance.now()-recStartedAt)/8000));recRingRaf=requestAnimationFrame(tick);};recRingRaf=requestAnimationFrame(tick);}
-async function startAudioCapture(){
+async function secureNameCandidatesFromAudio(typed){
+  if(!recordedAudioBlob)throw new Error('audio-required');if(!V26_API_BASE||/REPLACE/i.test(V26_API_BASE))throw new Error('engine-not-configured');
+  const form=new FormData();form.append('audio',recordedAudioBlob,'name.'+(recordedAudioBlob.type.includes('mp4')?'m4a':'webm'));form.append('typed',String(typed||'').slice(0,80));form.append('lang',String(sel.value||'he').slice(0,8));
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
   try{
-    if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
-    mediaStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});recordedChunks=[];mediaRecorder=new MediaRecorder(mediaStream);
-    mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};
-    mediaRecorder.onstop=()=>{
-      if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
-      const blob=new Blob(recordedChunks,{type:mediaRecorder.mimeType||'audio/webm'});recordedAudioSamples=null;
-      if(blob.size>0){recordedAudioBlob=blob;recordedAudioUrl=URL.createObjectURL(blob);}else{recordedAudioBlob=null;recordedAudioUrl=null;}
-      mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;mediaRecorder=null;renderRecordingTools();updateDualState();requestAnimationFrame(updateDualState);
-    };
-    mediaRecorder.start(200);return true;
-  }catch(e){mediaRecorder=null;mediaStream?.getTracks().forEach(t=>t.stop());mediaStream=null;const x=T[sel.value]||T.en;statusEl.classList.add('error-message');statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);renderRecordingTools();return false;}
+    const res=await fetch(V26_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json','X-TPH-Client':'v26-audio'},body:form,signal:controller.signal});
+    let data=null;try{data=await res.json();}catch(_e){}
+    if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
+    const records=Array.isArray(data?.candidates)?data.candidates.map(x=>typeof x==='string'?{spelling:normalizeHebrewName(x),pronunciation:normalizeHebrewName(x)}:{spelling:normalizeHebrewName(x?.spelling||''),pronunciation:String(x?.pronunciation||x?.spelling||'')}).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,12):[];
+    if(!records.length)throw new Error('no-candidates');return {candidates:records,heard:data?.heard||[],base:data?.base||'',crossCheck:data?.crossCheck||{},recognition:data?.recognition||'server-audio-v26'};
+  }finally{clearTimeout(timer);}
 }
-function stopAudioCapture(){if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}}
-function finishRecording(reason='manual'){
-  if(!recRecording)return;recRecording=false;recStarting=false;if(recStopTimer){clearTimeout(recStopTimer);recStopTimer=null;}stopRingAnimation();stopVoiceActivityMonitor();setRingProgress(1);mic.classList.remove('listening');setMicState('ready');stopAudioCapture();
+
+async function reconcileName(){
+  const typed=document.getElementById('typedName').value;if(!recordedAudioBlob||!isValidNameInput(typed))return;clearStatus();const btn=document.getElementById('discoverBtn');btn.disabled=true;
+  try{statusEl.textContent=(T[sel.value]||T.en).processing||'';const result=await secureNameCandidatesFromAudio(typed);recordedName=result.base||result.heard?.[0]||'';showChoices(result.candidates);updateDualState();}
+  catch(err){console.warn('Private audio name engine unavailable',err);resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');if(code==='cross-check-mismatch')statusEl.textContent=(V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch;else statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();}
+}
+
+function chooseMimeType(){
+  if(typeof MediaRecorder==='undefined'||!MediaRecorder.isTypeSupported)return '';
+  for(const type of ['audio/webm;codecs=opus','audio/webm','audio/mp4'])if(MediaRecorder.isTypeSupported(type))return type;
+  return '';
+}
+async function startAudioCapture(){
+  if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
+  const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:{ideal:1},echoCancellation:{ideal:true},noiseSuppression:{ideal:true},autoGainControl:{ideal:true}}});mediaStream=stream;recordedChunks=[];
+  const type=chooseMimeType();mediaRecorder=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+  mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data);};
+  mediaRecorder.onstop=()=>{
+    clearRecordTimer();stopRing();if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
+    const blob=new Blob(recordedChunks,{type:mediaRecorder?.mimeType||type||'audio/webm'});recordedAudioBlob=blob.size>=256?blob:null;recordedAudioUrl=recordedAudioBlob?URL.createObjectURL(recordedAudioBlob):null;
+    stopTracks();mediaRecorder=null;recordState='idle';mic.classList.remove('listening');setMicState('ready');setRingProgress(recordedAudioBlob?1:0);renderRecordingTools();updateDualState();
+    if(!recordedAudioBlob){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).noName||'No name was recognized. Please record again.';}
+  };
+  mediaRecorder.start(100);
+}
+function stopRecording(){
+  if(recordState!=='recording')return;recordState='stopping';clearRecordTimer();stopRing();try{if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();else{stopTracks();recordState='idle';}}catch(_e){stopTracks();mediaRecorder=null;recordState='idle';updateDualState();}
 }
 async function beginRecording(e){
-  if(recRecording||recStarting)return;e?.preventDefault?.();recStarting=true;recPointerHeld=true;recPressAt=performance.now();recReleaseDuration=null;recPointerId=e?.pointerId??null;if(recPointerId!==null){try{mic.setPointerCapture(recPointerId)}catch(_e){}}
-  resetRecording();resultBox.style.display='none';document.getElementById('choices').hidden=true;clearStatus();setRingProgress(0);renderRecordingTools();
-  const ok=await startAudioCapture();if(!ok){recStarting=false;recPointerHeld=false;setRingProgress(0);return;}
-  recStarting=false;recRecording=true;recStartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();startVoiceActivityMonitor(mediaStream);
-  if(recReleaseDuration!==null){if(recReleaseDuration>=1000)setTimeout(()=>finishRecording('release'),30);}
+  if(recordState!=='idle')return;e?.preventDefault?.();pointerId=e?.pointerId??null;if(pointerId!==null){try{mic.setPointerCapture(pointerId)}catch(_e){}}
+  resetRecording(false);releaseRequested=false;recordState='starting';clearStatus();resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);updateDualState();
+  try{
+    await startAudioCapture();recordState='recording';recordStartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();recordMaxTimer=setTimeout(stopRecording,10000);
+    if(releaseRequested)setTimeout(stopRecording,Math.max(0,450-(performance.now()-recordStartedAt)));
+  }catch(e){recordState='idle';mediaRecorder=null;stopTracks();const x=T[sel.value]||T.en;statusEl.classList.add('error-message');statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);renderRecordingTools();updateDualState();}
 }
 function releaseRecording(e){
-  if(recPointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==recPointerId)return;e?.preventDefault?.();recPointerHeld=false;const duration=Math.max(0,performance.now()-recPressAt);recReleaseDuration=duration;if(recStarting||!recRecording)return;if(duration>=1000)finishRecording('release');
+  if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;e?.preventDefault?.();releaseRequested=true;if(recordState==='recording')setTimeout(stopRecording,Math.max(0,450-(performance.now()-recordStartedAt)));
 }
-function resetRecording(){
-  if(recRecording)finishRecording('reset');stopVoiceActivityMonitor();clearHebrewRecognition();if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);renderRecordingTools();updateDualState();clearStatus();
+function resetRecording(clearStatusToo=true){
+  clearRecordTimer();stopRing();if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}stopTracks();mediaRecorder=null;recordState='idle';releaseRequested=false;pointerId=null;
+  if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');renderRecordingTools();updateDualState();if(clearStatusToo)clearStatus();
 }
+
+window.__nameEngineNextSelfTest=()=>({version:26,secure:true,clientRulesExposed:false,oneAudioTranscription:true,browserSpeechRecognition:false,secondAsrPass:false,clientAudioConversion:false,recordingPrimary:true,typedCrossCheck:true,typedMayCorrectVerifiedNearMiss:true,separatePronunciation:true,endpoint:V26_API_ENDPOINT});
+window.__inputNextSelfTest=function(){const cases=[['בן אל','בן אל',true],['בן  אל','בן אל',true],[' חן','חן',true],['חמןאל','חמנאל',true],["ג'ורג'","ג'ורג'",true],['231','',false],['Anne-Marie','AnneMarie',true],['Οςκαρ','Οσκαρ',true]];return cases.map(([raw,clean,valid])=>{const got=sanitizeNameInput(raw);return {raw,expectedClean:clean,actualClean:got,expectedValid:valid,actualValid:isValidNameInput(got),pass:got===clean&&isValidNameInput(got)===valid};});};
+
 ensureRecorderLayout();
-mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',e=>{if(recRecording||recStarting)releaseRecording(e);});mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
+mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',releaseRecording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
 const againMain=document.getElementById('again');if(againMain)againMain.onclick=()=>resetRecording();
-const typedInput=document.getElementById("typedName");typedInput.addEventListener("input",e=>{const clean=sanitizeNameInput(e.target.value);if(clean!==e.target.value){const end=clean.length;e.target.value=clean;try{e.target.setSelectionRange(end,end)}catch(_e){}}clearStatus();updateDualState();});typedInput.setAttribute("maxlength","60");
-document.getElementById("discoverBtn").addEventListener("click",()=>{reconcileName().catch(err=>{console.warn(err);updateDualState();});});
+const typedInput=document.getElementById('typedName');typedInput.addEventListener('input',e=>{const clean=sanitizeNameInput(e.target.value);if(clean!==e.target.value){const end=clean.length;e.target.value=clean;try{e.target.setSelectionRange(end,end)}catch(_e){}}clearStatus();updateDualState();});typedInput.setAttribute('maxlength','60');
+document.getElementById('discoverBtn').addEventListener('click',()=>{reconcileName().catch(err=>{console.warn(err);updateDualState();});});
 render(detectLang());
 
 </script>
 
-<script id="measure-fixed-nav-width">
-(function(){
-  function allNavLabels(){
-    const out=[];
-    try{
-      if(typeof T!=="undefined"){
-        Object.values(T).forEach(x=>{ if(x&&x.navAlpha)out.push(x.navAlpha); if(x&&x.navName)out.push(x.navName); });
-      }
-    }catch(e){}
-    try{
-      if(typeof VOICE_NAV!=="undefined"){
-        Object.values(VOICE_NAV).forEach(x=>{ if(x&&x.a)out.push(x.a); if(x&&x.n)out.push(x.n); });
-      }
-    }catch(e){}
-    try{ if(window.MEANING_NAV)Object.values(window.MEANING_NAV).forEach(x=>out.push(x)); }catch(e){} return [...new Set(out.filter(Boolean))];
-  }
-  function setWidth(){
-    const nav=document.querySelector('.page-nav a');
-    if(!nav)return;
-    const labels=allNavLabels();
-    if(!labels.length)return;
-    const probe=document.createElement('span');
-    const cs=getComputedStyle(nav);
-    probe.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;left:-99999px;top:-99999px;';
-    probe.style.font=cs.font;
-    probe.style.fontWeight=cs.fontWeight;
-    probe.style.letterSpacing=cs.letterSpacing;
-    document.body.appendChild(probe);
-    let max=0;
-    labels.forEach(txt=>{ probe.textContent=txt; max=Math.max(max,probe.getBoundingClientRect().width); });
-    probe.remove();
-    const width=Math.ceil(max+40); /* fixed padding allowance */
-    document.documentElement.style.setProperty('--shared-nav-width',width+'px');
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setWidth,{once:true});
-  else setWidth();
-})();
-</script>
+
 
 <script id="site-analytics-events">
 document.addEventListener('DOMContentLoaded',function(){
@@ -1618,165 +1502,37 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
-<script id="v3-nav-labels">
-(function(){
- const labels={he:['טבלת אותיות<br>השפה העברית','משמעות אותיות<br>השפה העברית','השם שלי<br>בשפה העברית']};
- function apply(){const lang=(document.getElementById('languageSelect')||{}).value;if(lang==='he'){['navAlpha','navMeaning','navName'].forEach((id,i)=>{const e=document.getElementById(id);if(e)e.innerHTML=labels.he[i]})}}
- document.addEventListener('DOMContentLoaded',()=>{apply();document.getElementById('languageSelect')?.addEventListener('change',()=>setTimeout(apply,0));});
- window.addEventListener('load',apply);
-})();
-</script>
 
-<style id="v6-verified-ui">
-/* Recorder: progress lives ONLY on microphone circumference */
-.required-field:first-child{display:flex!important;flex-direction:column!important}
-#recordLabel{order:1!important;margin-bottom:4px!important}
-#hold{order:2!important;margin:0 0 14px!important;min-height:22px!important;color:var(--muted)!important;font-size:15px!important;letter-spacing:0!important;font-weight:600!important}
-#mic{order:3!important;position:relative!important;isolation:isolate!important;--ring:0;border:0!important;background:#0b1219!important;margin:0 auto!important}
-#recordCheck{order:4!important;margin-top:14px!important}
-#recordingTools{order:5!important}
-#status{min-height:30px!important}
-.discover-btn:not(:disabled){opacity:1!important;background:linear-gradient(180deg,#f2d36b,#d4ae49)!important;color:#111!important;box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.2)!important}
-</style>
-<script id="v6-tap-hint">(function(){const oldRender=render;render=function(c){oldRender(c);const h=document.getElementById('hold');if(h)h.textContent=TAP_HINT[c]||TAP_HINT.en;};const c=sel.value||detectLang();const h=document.getElementById('hold');if(h)h.textContent=TAP_HINT[c]||TAP_HINT.en;})();</script>
-
-<style id="v7-authoritative-recorder">
-/* v7 authoritative recorder UI: no bar, no percentage; circular progress is the microphone perimeter. */
-#mic{position:relative!important;isolation:isolate!important;--ring:0!important;width:104px!important;height:104px!important;border:0!important;border-radius:50%!important;background:transparent!important;overflow:visible!important;padding:0!important;display:grid!important;place-items:center!important}
-#mic::before{content:""!important;position:absolute!important;inset:0!important;border-radius:50%!important;background:conic-gradient(from -90deg,#f2d36b calc(var(--ring) * 1turn),rgba(185,145,50,.32) 0)!important;z-index:0!important}
-#mic::after{content:""!important;position:absolute!important;inset:5px!important;border-radius:50%!important;background:#0b1219!important;z-index:1!important}
-#mic svg{position:relative!important;z-index:2!important;width:46px!important;height:46px!important}
-#hold{margin:2px auto 12px!important;min-height:22px!important}
-#recordCheck{margin-top:12px!important}
-.discover-btn.ready,.discover-btn:not(:disabled){opacity:1!important;filter:none!important;background:linear-gradient(180deg,#f2d36b,#d4ae49)!important;color:#111!important;border-color:#e6c75f!important;cursor:pointer!important}
-.discover-btn:disabled{opacity:.38!important;cursor:not-allowed!important}
-</style>
-
-<style id="v8-green-recorder-accent">
-/* v8: recorder progress and successful recording confirmation are green. */
-#mic::before{background:conic-gradient(from -90deg,#35d06f calc(var(--ring) * 1turn),rgba(53,208,111,.22) 0)!important}
-#mic.listening{box-shadow:0 0 0 7px rgba(53,208,111,.14),0 0 34px rgba(53,208,111,.28)!important}
-.recording-ok-check{color:#35d06f!important;font-weight:900!important}
-</style>
-
-<style id="final-nav-stability">
-.page-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;direction:ltr!important;flex-wrap:nowrap!important;width:100%!important}
-.page-nav a{grid-row:1!important;width:auto!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;min-height:54px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.2!important}
-.page-nav #navName{grid-column:1!important}.page-nav #navMeaning{grid-column:2!important}.page-nav #navAlpha{grid-column:3!important}
-.globe{display:none!important}.select-wrap{gap:0!important}
-@media(max-width:760px){.page-nav{gap:6px!important}.page-nav a{font-size:12px!important;padding:7px 4px!important;min-height:58px!important}}
-</style>
-
-<style id="final-voicefun-ui">
-.dual-inputs{grid-template-columns:minmax(0,620px)!important;justify-content:center!important;gap:12px!important;max-width:680px!important;margin:18px auto!important}
-.required-field{min-height:145px!important}.mic{width:92px!important;height:92px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;margin:auto!important}
-#status,.field-check{position:static!important;display:block!important;min-height:26px!important;margin-top:10px!important;line-height:1.35!important}
-.recording-tools{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:10px}.recording-tools button{border-radius:999px;padding:8px 14px}
-</style>
-
-<style id="v2-voicefun-fixes">
-.voice-card{max-width:760px!important;margin-left:auto!important;margin-right:auto!important}
-.dual-inputs{display:grid!important;grid-template-columns:1fr!important;gap:0!important;max-width:640px!important;margin:18px auto!important;border:1px solid var(--line)!important;border-radius:18px!important;background:rgba(255,255,255,.025)!important;overflow:hidden!important}
-.dual-inputs .required-field{border:0!important;border-radius:0!important;background:transparent!important;margin:0!important;padding:20px 22px!important;min-height:0!important}
-.dual-inputs .required-field+ .required-field{border-top:1px solid var(--line)!important}
-#hold{margin:8px auto 0!important;min-height:0!important;text-align:center!important}
-.error-message{color:#ff5b5b!important;font-weight:800!important}
-#status.error-message{color:#ff5b5b!important;background:rgba(180,25,25,.13)!important;border:1px solid rgba(255,91,91,.55)!important;border-radius:10px!important;padding:10px 12px!important;font-weight:800!important}
-.select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important}.globe{display:none!important}
-</style>
-
-<style id="v2-shared-top-stability">
+<style id="voicefun-final-layout">
 .top{display:grid!important;grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr)!important;align-items:start!important;gap:16px!important;direction:ltr!important}
 .top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}
 .top .controls{grid-column:2 / 4!important;grid-row:1!important;display:grid!important;grid-template-columns:280px minmax(0,1fr)!important;align-items:start!important;gap:12px!important;direction:ltr!important}
 .top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;justify-self:stretch!important;width:280px!important;min-width:280px!important}
 .top .controls #printBtn{grid-column:2!important;justify-self:end!important}
-.select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important}.globe{display:none!important}
+.select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important;gap:0!important}.globe{display:none!important}
 @media(max-width:760px){.top{grid-template-columns:1fr!important}.top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}.top .controls{grid-column:1!important;grid-row:2!important;grid-template-columns:minmax(0,280px) minmax(0,1fr)!important;width:100%!important}.top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;width:100%!important;min-width:0!important;max-width:280px!important}.top .controls #printBtn{grid-column:2!important}}
-</style>
 
-<style id="v2-result-audio">.hebrew{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important}.result-audio-btn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;border:1px solid var(--gold)!important;background:var(--card2)!important;color:var(--gold2)!important}</style>
-
-<style id="release9-voice-fixes">
-/* Release 9 recorder: green perimeter is the only timer. It starts at 12 o'clock and fills clockwise in 3 seconds. */
-#mic{--ring-pct:0%;position:relative!important;isolation:isolate!important;width:104px!important;height:104px!important;border:0!important;border-radius:50%!important;background:transparent!important;overflow:visible!important;padding:0!important;display:grid!important;place-items:center!important;margin:0!important;touch-action:none!important}
-#mic::before{content:""!important;position:absolute!important;inset:0!important;border-radius:50%!important;background:conic-gradient(from 0deg,#35d06f 0 var(--ring-pct),rgba(53,208,111,.18) var(--ring-pct) 100%)!important;z-index:0!important}
-#mic::after{content:""!important;position:absolute!important;inset:5px!important;border-radius:50%!important;background:#0b1219!important;z-index:1!important}
-#mic svg{position:relative!important;z-index:2!important;width:46px!important;height:46px!important}
-#mic.listening{box-shadow:0 0 0 7px rgba(53,208,111,.12),0 0 30px rgba(53,208,111,.24)!important}
-.recording-ok-check{color:#35d06f!important;font-weight:900!important}
-/* The secondary recording controls are physically LEFT of the microphone; Step 2 follows directly below Step 1. */
-.dual-inputs .required-field:first-child{display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;padding:14px 18px 8px!important}
-#recordLabel{grid-row:1!important;margin:0 0 4px!important}
-#hold{grid-row:2!important;display:block!important;margin:0 0 7px!important;min-height:21px!important;color:var(--muted)!important;text-align:center!important}
-#recorderActionRow{grid-row:3!important;width:min(100%,470px)!important;min-height:116px!important;display:grid!important;grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr)!important;column-gap:12px!important;align-items:center!important;direction:ltr!important}
-.recorder-mic-stack{grid-column:2!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important}
-#recordingTools{grid-column:1!important;justify-self:end!important;align-self:center!important;width:min(132px,100%)!important;display:flex!important;flex-direction:column!important;gap:7px!important;margin:0!important;position:static!important;transform:none!important}
-#recordingTools[hidden]{display:none!important}
-#recordingTools button{min-height:34px!important;padding:6px 8px!important;border-radius:10px!important;border:1px solid #48535f!important;background:#111a22!important;color:var(--text)!important;box-shadow:none!important;font-size:12.5px!important;font-weight:700!important;white-space:normal!important;line-height:1.15!important}
-#recordingTools button:active{transform:scale(.98)!important}
-#recordCheck{margin:5px 0 0!important;min-height:22px!important;text-align:center!important;white-space:nowrap!important;overflow:visible!important}
-.dual-inputs .required-field+.required-field{padding-top:8px!important;padding-bottom:14px!important}
-#status{margin:6px auto 0!important;min-height:0!important}
-.discover-btn:not(:disabled){opacity:1!important;filter:none!important;background:linear-gradient(180deg,#f2d36b,#d4ae49)!important;color:#111!important;border-color:#e6c75f!important;cursor:pointer!important}
-.discover-btn:disabled{opacity:.38!important;cursor:not-allowed!important}
-#foot{display:none!important}
-@media(max-width:560px){#recorderActionRow{width:100%!important;grid-template-columns:minmax(0,1fr) 94px minmax(0,1fr)!important;column-gap:8px!important;min-height:108px!important}#mic{width:94px!important;height:94px!important}#recordingTools{width:min(108px,100%)!important}#recordingTools button{font-size:11.5px!important;padding:5px 6px!important}}
-</style>
-
-<style id="release10-authoritative-fixes">
-:root{--success-green:#075E54}
-/* One dark WhatsApp-style success green for the recorder ring and every success check. */
-#mic::before{background:conic-gradient(from 0deg,var(--success-green) 0 var(--ring-pct),rgba(7,94,84,.24) var(--ring-pct) 100%)!important}
-#mic.listening{box-shadow:0 0 0 7px rgba(7,94,84,.20),0 0 30px rgba(7,94,84,.36)!important}
-.success-check,.recording-ok-check{color:var(--success-green)!important;font-weight:900!important}
-.field-check{display:flex!important;flex-direction:row!important;direction:ltr!important;align-items:center!important;justify-content:center!important;gap:7px!important}
-.field-check .check-label{direction:auto!important;unicode-bidi:plaintext!important;color:var(--text)!important}
-/* Recording tools sit immediately to the RIGHT of the microphone. */
-#recordingTools{grid-column:3!important;justify-self:start!important;align-self:center!important;margin:0!important}
-#recorderActionRow{direction:ltr!important}
-/* Keep step 2 visually connected directly below step 1. */
-.dual-inputs .required-field:first-child{padding-bottom:8px!important}
-.dual-inputs .required-field+.required-field{padding-top:8px!important}
-/* Invalid characters are removed by JS; visually avoid browser invalid styling drift. */
-#typedName:invalid{box-shadow:none!important}
-</style>
-
-<style id="release11-authoritative-recorder">
-/* Release 11: tactile, modern recorder — microphone on the physical right, tools on the left. */
-.dual-inputs .required-field:first-child{padding:16px 18px 10px!important}
-#recorderActionRow{width:min(100%,390px)!important;min-height:118px!important;display:grid!important;grid-template-columns:minmax(138px,1fr) 112px!important;gap:18px!important;align-items:center!important;justify-content:center!important;direction:ltr!important;margin:4px auto 0!important}
-.recorder-mic-stack{grid-column:2!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;min-width:0!important}
-#recordingTools{grid-column:1!important;display:flex!important;flex-direction:column!important;gap:8px!important;align-items:stretch!important;justify-self:stretch!important;width:100%!important;margin:0!important}
-#recordingTools[hidden]{display:flex!important}
-#recordingTools .recorder-tool{min-height:38px!important;border:1px solid #40505a!important;border-radius:12px!important;background:linear-gradient(180deg,#17232b,#111a20)!important;color:#edf2f5!important;padding:7px 10px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;font-size:12.5px!important;font-weight:750!important;line-height:1.1!important;box-shadow:0 5px 16px rgba(0,0,0,.18)!important;transition:transform .14s ease,opacity .14s ease,border-color .14s ease,background .14s ease!important}
-#recordingTools .recorder-tool:not(:disabled){cursor:pointer!important;border-color:#687984!important}
-#recordingTools .recorder-tool:not(:disabled):active{transform:scale(.97)!important}
-#recordingTools .recorder-tool:disabled{opacity:.30!important;cursor:default!important;filter:saturate(.45)!important;box-shadow:none!important}
-#recordingTools .recorder-tool svg{flex:0 0 auto!important}
-#mic{--ring-pct:0%;grid-column:2!important;width:104px!important;height:104px!important;border:0!important;border-radius:50%!important;background:transparent!important;padding:0!important;margin:0!important;position:relative!important;display:grid!important;place-items:center!important;overflow:visible!important;touch-action:none!important;user-select:none!important;-webkit-user-select:none!important;-webkit-tap-highlight-color:transparent!important;outline:none!important;cursor:pointer!important;transform:translateZ(0)!important}
-#mic::before{content:""!important;position:absolute!important;inset:0!important;border-radius:50%!important;background:conic-gradient(from -90deg,var(--success-green) 0 var(--ring-pct),rgba(7,94,84,.18) var(--ring-pct) 100%)!important;box-shadow:0 7px 22px rgba(0,0,0,.28)!important;z-index:0!important}
-#mic::after{content:""!important;position:absolute!important;inset:5px!important;border-radius:50%!important;background:radial-gradient(circle at 38% 32%,#17252b 0,#0b1419 68%,#071015 100%)!important;border:1px solid rgba(255,255,255,.055)!important;z-index:1!important;transition:transform .12s ease,background .18s ease!important}
-#mic svg{position:relative!important;z-index:2!important;width:43px!important;height:43px!important;color:#f0cf69!important;fill:currentColor!important;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))!important;pointer-events:none!important}
-#mic:active::after{transform:scale(.94)!important}
-#mic:focus,#mic:focus-visible{outline:none!important}
-#mic:focus-visible{box-shadow:0 0 0 4px rgba(7,94,84,.28)!important;border-radius:50%!important}
-#mic.listening{animation:v11MicPulse 1.45s ease-out infinite!important;box-shadow:none!important}
-#mic.listening::after{background:radial-gradient(circle at 38% 32%,#15312e 0,#0a1b1a 70%,#061010 100%)!important}
-@keyframes v11MicPulse{0%{filter:drop-shadow(0 0 0 rgba(7,94,84,0))}45%{filter:drop-shadow(0 0 13px rgba(7,94,84,.62))}100%{filter:drop-shadow(0 0 0 rgba(7,94,84,0))}}
-#recordCheck{margin:6px 0 0!important;min-height:22px!important}
-.field-check{display:flex!important;direction:ltr!important;align-items:center!important;justify-content:center!important;gap:7px!important}
-.field-check .success-check{order:1!important}.field-check .check-label{order:2!important;unicode-bidi:plaintext!important;color:var(--text)!important}
-@media(max-width:560px){#recorderActionRow{width:min(100%,330px)!important;grid-template-columns:minmax(118px,1fr) 98px!important;gap:12px!important;min-height:108px!important}#mic{width:96px!important;height:96px!important}#mic svg{width:40px!important;height:40px!important}#recordingTools .recorder-tool{font-size:11.5px!important;padding:6px 7px!important;min-height:36px!important}}
-</style>
-
-
-<style id="release12-authoritative-recorder">
-/* Release 12 — recorder is the visual and functional heart of the page. */
-:root{--recorder-deep:#075E54;--recorder-live:#25D366;--recorder-track:rgba(7,94,84,.24)}
+:root{--success-green:#075E54;--recorder-deep:#075E54;--recorder-live:#25D366;--recorder-track:rgba(7,94,84,.24)}
+.voice-card{max-width:760px!important;margin-left:auto!important;margin-right:auto!important}
+.dual-inputs{display:grid!important;grid-template-columns:1fr!important;gap:0!important;max-width:640px!important;margin:18px auto!important;border:1px solid var(--line)!important;border-radius:18px!important;background:rgba(255,255,255,.025)!important;overflow:hidden!important}
+.dual-inputs .required-field{border:0!important;border-radius:0!important;background:transparent!important;margin:0!important;padding:20px 22px!important;min-height:0!important}
+.dual-inputs .required-field+.required-field{border-top:1px solid var(--line)!important;padding-top:8px!important;padding-bottom:14px!important}
 .dual-inputs .required-field:first-child{display:grid!important;grid-template-columns:1fr!important;justify-items:center!important;padding:18px 18px 12px!important}
 #recordLabel{grid-row:1!important;margin:0 0 5px!important}
-#hold{grid-row:2!important;margin:0 0 10px!important;min-height:20px!important}
+#hold{grid-row:2!important;margin:0 0 10px!important;min-height:20px!important;text-align:center!important}
+#status{position:static!important;display:block!important;margin:6px auto 0!important;min-height:0!important;line-height:1.35!important}
+.error-message{color:#ff5b5b!important;font-weight:800!important}
+#status.error-message{color:#ff5b5b!important;background:rgba(180,25,25,.13)!important;border:1px solid rgba(255,91,91,.55)!important;border-radius:10px!important;padding:10px 12px!important;font-weight:800!important}
+#typedName:invalid{box-shadow:none!important}
+#foot{display:none!important}
+.discover-btn.ready,.discover-btn:not(:disabled){opacity:1!important;filter:none!important;background:linear-gradient(180deg,#f2d36b,#d4ae49)!important;color:#111!important;border-color:#e6c75f!important;cursor:pointer!important;box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.2)!important}
+.discover-btn:disabled{opacity:.38!important;cursor:not-allowed!important}
+.field-check{display:flex!important;flex-direction:row!important;direction:ltr!important;align-items:center!important;justify-content:center!important;gap:7px!important}
+.field-check .check-label{direction:auto!important;unicode-bidi:plaintext!important;color:var(--text)!important}
+.success-check,.recording-ok-check{color:var(--success-green)!important;font-weight:900!important}
+.hebrew{display:flex!important;align-items:center!important;justify-content:center!important;gap:10px!important}
+.result-audio-btn{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;border:1px solid var(--gold)!important;background:var(--card2)!important;color:var(--gold2)!important}
+/* Recorder: one authoritative layout and one progress ring. */
 #recorderActionRow{grid-row:3!important;width:min(100%,430px)!important;min-height:132px!important;display:grid!important;grid-template-columns:minmax(150px,1fr) 124px!important;column-gap:24px!important;align-items:center!important;justify-content:center!important;direction:ltr!important;margin:2px auto 0!important}
 .recorder-mic-stack{order:0!important;grid-column:2!important;grid-row:1!important;display:grid!important;place-items:center!important;width:124px!important;height:124px!important;min-width:124px!important;min-height:124px!important;align-self:center!important}
 #recordingTools{order:0!important;grid-column:1!important;grid-row:1!important;align-self:center!important;justify-self:stretch!important;width:100%!important;display:flex!important;flex-direction:column!important;gap:10px!important;margin:0!important;transform:none!important}
@@ -1797,13 +1553,11 @@ document.addEventListener('DOMContentLoaded',function(){
 #mic.listening::before{background:conic-gradient(from -90deg,var(--recorder-live) 0 var(--ring-pct),rgba(7,94,84,.26) var(--ring-pct) 100%)!important;box-shadow:0 10px 28px rgba(0,0,0,.32),0 0 0 7px rgba(37,211,102,.10),0 0 28px rgba(37,211,102,.40)!important}
 #mic.listening::after{background:radial-gradient(circle at 36% 30%,#175348 0%,#0a2a26 52%,#071815 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -12px 26px rgba(0,0,0,.25)!important}
 #mic.listening svg{filter:drop-shadow(0 0 9px rgba(255,255,255,.20))!important}
-#mic.listening{animation:v12MicBreath 1.35s ease-in-out infinite!important}
-@keyframes v12MicBreath{0%,100%{filter:drop-shadow(0 0 0 rgba(37,211,102,0))}50%{filter:drop-shadow(0 0 13px rgba(37,211,102,.52))}}
+#mic.listening{animation:v26MicBreath 1.35s ease-in-out infinite!important}
+@keyframes v26MicBreath{0%,100%{filter:drop-shadow(0 0 0 rgba(37,211,102,0))}50%{filter:drop-shadow(0 0 13px rgba(37,211,102,.52))}}
 #recordCheck{grid-row:4!important;margin:7px 0 0!important;min-height:24px!important;text-align:center!important;align-self:center!important}
-#recordCheck.field-check{display:flex!important;direction:ltr!important;align-items:center!important;justify-content:center!important;gap:7px!important}
 #recordCheck .success-check{order:1!important;color:var(--success-green)!important}
 #recordCheck .check-label{order:2!important;color:var(--text)!important;unicode-bidi:plaintext!important}
-.dual-inputs .required-field+.required-field{padding-top:10px!important}
 @media(max-width:560px){
   #recorderActionRow{width:min(100%,350px)!important;grid-template-columns:minmax(126px,1fr) 112px!important;column-gap:14px!important;min-height:120px!important}
   .recorder-mic-stack{width:112px!important;height:112px!important;min-width:112px!important;min-height:112px!important}
@@ -1819,6 +1573,5 @@ document.addEventListener('DOMContentLoaded',function(){
   #recordingTools .recorder-tool{font-size:11.3px!important;padding:6px 7px!important}
 }
 </style>
-
 </body>
 </html>

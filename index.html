@@ -852,19 +852,8 @@ table{
   }
 }
 </style>
-<style id="three-nav-fixed">
-.page-nav{direction:ltr!important;display:grid!important;grid-template-columns:repeat(3,var(--shared-nav-width))!important;justify-content:end!important;gap:var(--shared-nav-gap)!important}
-.page-nav #navName{grid-column:1!important}.page-nav #navMeaning{grid-column:2!important}.page-nav #navAlpha{grid-column:3!important}
-@media(max-width:700px){.page-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.page-nav a{min-width:0!important;width:100%!important}}
-</style>
-<style id="qa-final-fixes">
-.page-nav{display:grid!important;grid-template-columns:repeat(3,minmax(210px,210px))!important;gap:10px!important;justify-content:center!important;direction:ltr!important}
-.page-nav a{width:210px!important;min-width:210px!important;max-width:210px!important;box-sizing:border-box!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-.word-row{display:grid!important;grid-template-columns:44px minmax(120px,1fr) minmax(120px,1fr)!important;align-items:center!important;direction:ltr!important}
-.word-row .play-btn{grid-column:1!important}.word-row .translation{grid-column:2!important;text-align:left!important;direction:auto!important}.word-row .he-word{grid-column:3!important;text-align:right!important;direction:rtl!important}
-.letter-content{margin-top:12px;line-height:1.8;white-space:normal}.letter-content p{margin:0 0 10px}.he-word,.hebrew-letter,.hebrew-name{cursor:pointer}
-@media(max-width:760px){.page-nav{grid-template-columns:repeat(3,minmax(0,1fr))!important}.page-nav a{width:auto!important;min-width:0!important;max-width:none!important;font-size:12px!important}.word-row{grid-template-columns:40px 1fr 1fr!important}}
-</style>
+
+
 <style>.letter-link{color:inherit;text-decoration:none;display:block}.letter-link:hover{text-decoration:underline}</style>
 <!-- Google Analytics 4: privacy-conscious event measurement -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-DWPQ52DCDY"></script>
@@ -874,14 +863,46 @@ gtag('js',new Date());gtag('config','G-DWPQ52DCDY',{'anonymize_ip':true});
 window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}catch(e){}};
 </script>
 
-<style id="next-release-nav-active">
-.page-nav a{font-weight:800!important}
-.page-nav a.active{
-  border:1px solid #9f8238!important;
-  background:linear-gradient(180deg,var(--gold2),var(--gold))!important;
-  color:#111!important;
-  font-weight:800!important;
-  box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.20)!important;
+
+
+
+<style id="qa-content-layout-base">
+.word-row{display:grid!important;grid-template-columns:44px minmax(120px,1fr) minmax(120px,1fr)!important;align-items:center!important;direction:ltr!important}
+.word-row .play-btn{grid-column:1!important}.word-row .translation{grid-column:2!important;text-align:left!important;direction:auto!important}.word-row .he-word{grid-column:3!important;text-align:right!important;direction:rtl!important}
+.letter-content{margin-top:12px;line-height:1.8;white-space:normal}.letter-content p{margin:0 0 10px}.he-word,.hebrew-letter,.hebrew-name{cursor:pointer}
+@media(max-width:760px){.word-row{grid-template-columns:40px 1fr 1fr!important}}
+</style>
+<style id="site-navigation-base">
+/* Shared three-page navigation. Long labels wrap; nothing is clipped on mobile. */
+.page-nav,.nav{
+  direction:ltr!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,210px))!important;
+  justify-content:center!important;
+  align-items:stretch!important;
+  gap:10px!important;
+  width:100%!important;
+}
+.page-nav #navName,.nav #navName{grid-column:1!important}
+.page-nav #navMeaning,.nav #navMeaning{grid-column:2!important}
+.page-nav #navAlpha,.nav #navAlpha{grid-column:3!important}
+.page-nav a,.nav a{
+  grid-row:1!important;
+  width:100%!important;min-width:0!important;max-width:none!important;
+  box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  text-align:center!important;font-weight:800!important;line-height:1.18!important;
+  min-height:58px!important;height:auto!important;max-height:none!important;padding:9px 10px!important;
+  white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  overflow-wrap:anywhere!important;word-break:normal!important;hyphens:auto!important;
+}
+.page-nav a *,.nav a *{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;overflow-wrap:anywhere!important;word-break:normal!important}
+.page-nav a.active,.nav a.active{
+  border:1px solid #9f8238!important;background:linear-gradient(180deg,var(--gold2),var(--gold))!important;
+  color:#111!important;box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.20)!important;
+}
+@media(max-width:760px){
+  .page-nav,.nav{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;}
+  .page-nav a,.nav a{font-size:clamp(9.5px,2.75vw,12px)!important;line-height:1.12!important;min-height:64px!important;padding:7px 3px!important;}
 }
 </style>
 </head>
@@ -1397,44 +1418,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 
-<script id="measure-fixed-nav-width">
-(function(){
-  function allNavLabels(){
-    const out=[];
-    try{
-      if(typeof T!=="undefined"){
-        Object.values(T).forEach(x=>{ if(x&&x.navAlpha)out.push(x.navAlpha); if(x&&x.navName)out.push(x.navName); if(x&&x.navMeaning)out.push(x.navMeaning); });
-      }
-    }catch(e){}
-    try{
-      if(typeof VOICE_NAV!=="undefined"){
-        Object.values(VOICE_NAV).forEach(x=>{ if(x&&x.a)out.push(x.a); if(x&&x.n)out.push(x.n); });
-      }
-    }catch(e){}
-    return [...new Set(out.filter(Boolean))];
-  }
-  function setWidth(){
-    const nav=document.querySelector('.page-nav a');
-    if(!nav)return;
-    const labels=allNavLabels();
-    if(!labels.length)return;
-    const probe=document.createElement('span');
-    const cs=getComputedStyle(nav);
-    probe.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;left:-99999px;top:-99999px;';
-    probe.style.font=cs.font;
-    probe.style.fontWeight=cs.fontWeight;
-    probe.style.letterSpacing=cs.letterSpacing;
-    document.body.appendChild(probe);
-    let max=0;
-    labels.forEach(txt=>{ probe.textContent=txt; max=Math.max(max,probe.getBoundingClientRect().width); });
-    probe.remove();
-    const width=Math.ceil(max+40); /* fixed padding allowance */
-    document.documentElement.style.setProperty('--shared-nav-width',width+'px');
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setWidth,{once:true});
-  else setWidth();
-})();
-</script>
+
 
 <script id="site-analytics-events">
 document.addEventListener('DOMContentLoaded',function(){
@@ -1450,33 +1434,22 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 </script>
 
-<style id="final-nav-stability">
-.page-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;direction:ltr!important;flex-wrap:nowrap!important;width:100%!important}
-.page-nav a{grid-row:1!important;width:auto!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important;min-height:54px!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;line-height:1.2!important}
-.page-nav #navName{grid-column:1!important}.page-nav #navMeaning{grid-column:2!important}.page-nav #navAlpha{grid-column:3!important}
-.globe{display:none!important}.select-wrap{gap:0!important}
-@media(max-width:760px){.page-nav{gap:6px!important}.page-nav a{font-size:12px!important;padding:7px 4px!important;min-height:58px!important}}
-</style>
-
-<style id="v2-shared-top-stability">
+<style id="index-final-layout">
 .top{display:grid!important;grid-template-columns:minmax(0,1fr) 280px minmax(0,1fr)!important;align-items:start!important;gap:16px!important;direction:ltr!important}
 .top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}
 .top .controls{grid-column:2 / 4!important;grid-row:1!important;display:grid!important;grid-template-columns:280px minmax(0,1fr)!important;align-items:start!important;gap:12px!important;direction:ltr!important}
 .top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;justify-self:stretch!important;width:280px!important;min-width:280px!important}
 .top .controls #printBtn{grid-column:2!important;justify-self:end!important}
-.select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important}.globe{display:none!important}
+.select-wrap{border:0!important;background:transparent!important;padding:0!important;min-height:0!important;gap:0!important}.globe{display:none!important}
 @media(max-width:760px){.top{grid-template-columns:1fr!important}.top .title-block,.top>div:first-child{grid-column:1!important;grid-row:1!important}.top .controls{grid-column:1!important;grid-row:2!important;grid-template-columns:minmax(0,280px) minmax(0,1fr)!important;width:100%!important}.top .controls .select-wrap,.top .controls>.custom-lang-picker{grid-column:1!important;width:100%!important;min-width:0!important;max-width:280px!important}.top .controls #printBtn{grid-column:2!important}}
-</style>
 
-<style id="release9-index-fixes">
-/* Keep the physical table order identical to Hebrew in every selected UI language. */
+/* Alphabet table keeps the same physical Hebrew-oriented column order in every UI language. */
 .card{direction:rtl!important}
 .alphabet-table-fixed{direction:rtl!important;table-layout:fixed!important;width:100%!important}
 .alphabet-table-fixed thead,.alphabet-table-fixed tbody,.alphabet-table-fixed tr{direction:rtl!important}
 .alphabet-table-fixed th,.alphabet-table-fixed td{text-align:center!important}
 .alphabet-table-fixed .hebrew-letter,.alphabet-table-fixed .hebrew-handwriting,.alphabet-table-fixed .hebrew-name{direction:rtl!important}
 .alphabet-table-fixed .gem,.alphabet-table-fixed .pron{direction:ltr!important;unicode-bidi:plaintext!important}
-/* Clear but restrained link affordance for clickable letters. */
 .alphabet-table-fixed .hebrew-letter .letter-link,.alphabet-table-fixed .hebrew-handwriting .letter-link{display:inline-block!important;text-decoration-line:underline!important;text-decoration-color:rgba(216,182,83,.95)!important;text-decoration-thickness:1px!important;text-underline-offset:4px!important;cursor:pointer!important}
 .alphabet-table-fixed .hebrew-letter .letter-link:hover,.alphabet-table-fixed .hebrew-handwriting .letter-link:hover{color:var(--gold2)!important;text-decoration-thickness:2px!important}
 .alphabet-table-fixed .hebrew-letter .letter-link:active,.alphabet-table-fixed .hebrew-handwriting .letter-link:active{transform:scale(.96)!important}
