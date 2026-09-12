@@ -1048,10 +1048,8 @@ window.trackSiteEvent=function(name,params){try{gtag('event',name,params||{});}c
       <div class="required-field"><div id="recordLabel" class="field-label"></div><button id="mic" class="mic" type="button" aria-label="Record your name">
       <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a1 1 0 1 1 2 0 7 7 0 0 1-6 6.92V21h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.08A7 7 0 0 1 5 11a1 1 0 1 1 2 0 5 5 0 0 0 10 0Z"/></svg>
     </button><div id="hold" class="hold"></div><div id="recordCheck" class="field-check"></div></div>
-      <div class="required-field" id="v27TypedField"><label id="typeLabel" class="field-label" for="typedName"></label><input id="typedName" class="name-input" type="text" autocomplete="name" spellcheck="false" inputmode="text" autocapitalize="words"><div id="typeCheck" class="field-check"></div></div>
     </div>
     <div id="status" class="status"></div>
-    <button id="discoverBtn" class="discover-btn" type="button" disabled></button>
     <div id="choices" class="choices" hidden></div>
     <div id="resultBox" class="result">
       <div id="resultLabel" class="result-label"></div>
@@ -1108,7 +1106,7 @@ function render(code){
   document.title="ThePowerOfHebrew — My Name in Hebrew"; document.getElementById("brandEyebrow").textContent="ThePowerOfHebrew"; pageTitle.textContent=t.title; sub.textContent=t.sub; hold.textContent=(TAP_HINT[code]||TAP_HINT.en); statusEl.textContent="";
   navAlpha.textContent=t.navAlpha; navName.textContent=t.navName; if(window.MEANING_NAV&&navMeaning)navMeaning.textContent=MEANING_NAV[code]||MEANING_NAV.he; if(window.YOUTUBE_LABELS&&youtubeChannelText)youtubeChannelText.textContent=YOUTUBE_LABELS[code]||YOUTUBE_LABELS.he; resultLabel.textContent=t.result;
   again.textContent=t.again; foot.textContent=(typeof TAP_HINT!=="undefined"?(TAP_HINT[code]||TAP_HINT.en):""); setMicState("ready");
-  const u=UX[code]||UX.en; if(u.introHtml){sub.innerHTML=u.introHtml;}else{sub.textContent=u.intro;} document.getElementById("recordLabel").textContent=u.record; document.getElementById("typeLabel").textContent=u.type; document.getElementById("typedName").placeholder=u.ph; document.getElementById("discoverBtn").textContent=u.go; updateDualState();
+  const u=UX[code]||UX.en; sub.textContent=t.sub||u.intro||''; document.getElementById("recordLabel").textContent=(code==='he'?'נא להקליט את שמך':u.record.replace(/^1\.\s*/,'')); updateDualState();
 }
 
 const latinPron = {
@@ -1304,9 +1302,9 @@ function isPlausibleHebrewCandidate(name){
    The recording is kept locally until the user types the name and presses Discover.
    The server analyzes audio FIRST, independently of the typed text; typing is secondary cross-check only.
    No browser speech recognition, no Whisper pass and no third-party speech engine. */
-const V32_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
-const V32_API_ENDPOINT=V32_API_BASE+'/api/name-candidates';
-const V32_SPEAK_ENDPOINT=V32_API_BASE+'/api/speak';
+const V34_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
+const V34_API_ENDPOINT=V34_API_BASE+'/api/name-candidates';
+const V34_SPEAK_ENDPOINT=V34_API_BASE+'/api/speak';
 const mic=document.getElementById('mic'),statusEl=document.getElementById('status'),resultBox=document.getElementById('resultBox');
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
 let recordState='idle',recordStartedAt=0,recordMaxTimer=null,ringRaf=null,pointerId=null;
@@ -1363,10 +1361,8 @@ function renderRecordingTools(){
 }
 function setSuccessCheck(el,label){el.textContent='';const clean=String(label||'').replace(/✓/g,'').trim(),mark=document.createElement('span'),text=document.createElement('span');mark.className='success-check';mark.textContent='✓';text.className='check-label';text.textContent=clean;el.appendChild(mark);el.appendChild(text);}
 function updateDualState(){
-  const u=UX[sel.value]||UX.en,hasRecording=!!recordedAudioBlob,typedEl=document.getElementById('typedName'),typed=String(typedEl?.value||'').trim(),rc=document.getElementById('recordCheck'),tc=document.getElementById('typeCheck'),go=document.getElementById('discoverBtn');
+  const u=UX[sel.value]||UX.en,hasRecording=!!recordedAudioBlob,rc=document.getElementById('recordCheck');
   if(rc){rc.textContent='';if(hasRecording){setSuccessCheck(rc,u.recorded);setRingProgress(1);}}
-  if(tc){tc.textContent='';if(typed){setSuccessCheck(tc,u.typed);}}
-  if(go){go.disabled=!(hasRecording&&typed&&recordState==='idle');go.classList.toggle('ready',!go.disabled);}
   renderRecordingTools();
 }
 
@@ -1374,12 +1370,12 @@ let currentCandidateAudio=null,currentCandidateAudioUrl=null;
 function candidatePlaybackError(){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).speechError||'Playback unavailable';}
 async function speakCandidate(candidate){
   const playbackToken=String(candidate?.playbackToken||'').trim();
-  if(!playbackToken||!V32_API_BASE){candidatePlaybackError();return;}
+  if(!playbackToken||!V34_API_BASE){candidatePlaybackError();return;}
   try{
     if(currentCandidateAudio){try{currentCandidateAudio.pause()}catch(_e){}}
     if(currentCandidateAudioUrl){try{URL.revokeObjectURL(currentCandidateAudioUrl)}catch(_e){}currentCandidateAudioUrl=null;}
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let res;
-    try{res=await fetch(V32_SPEAK_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({playbackToken}),signal:controller.signal});}
+    try{res=await fetch(V34_SPEAK_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({playbackToken}),signal:controller.signal});}
     finally{clearTimeout(timer);}
     if(!res.ok)throw new Error('playback-failed');
     const blob=await res.blob();if(!blob.size)throw new Error('playback-empty');
@@ -1421,19 +1417,18 @@ async function recordingBlobToWav(blob){
 }
 
 async function secureNameCandidatesFromAudio(){
-  const typed=String(document.getElementById('typedName')?.value||'').trim();
-  if(!recordedAudioBlob)throw new Error('audio-required');if(!typed)throw new Error('typed-required');if(!V32_API_BASE||/REPLACE/i.test(V32_API_BASE))throw new Error('engine-not-configured');
+  if(!recordedAudioBlob)throw new Error('audio-required');if(!V34_API_BASE||/REPLACE/i.test(V34_API_BASE))throw new Error('engine-not-configured');
   const wavBlob=await recordingBlobToWav(recordedAudioBlob);
-  const form=new FormData();form.append('audio',wavBlob,'name.wav');form.append('typed',typed);
+  const form=new FormData();form.append('audio',wavBlob,'name.wav');
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),60000);
   try{
-    const res=await fetch(V32_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json'},body:form,signal:controller.signal});
+    const res=await fetch(V34_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json'},body:form,signal:controller.signal});
     let data=null;try{data=await res.json();}catch(_e){}
-    window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,stage:data?.stage||null,match:data?.match||null};
+    window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,stage:data?.stage||null,match:null};
     if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
     const records=Array.isArray(data?.candidates)?data.candidates.map(x=>({spelling:normalizeHebrewName(x?.spelling||''),playbackToken:String(x?.playbackToken||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&x.playbackToken).slice(0,64):[];
     if(!records.length)throw new Error('no-candidates');
-    return {candidates:records,base:records[0]?.spelling||'',match:data?.match||'uncertain',recognition:data?.recognition||'openai-private-acoustic-v32'};
+    return {candidates:records,base:records[0]?.spelling||'',recognition:data?.recognition||'openai-private-acoustic-v34-recording-only'};
   }finally{clearTimeout(timer);}
 }
 async function processRecordedAudio(){
@@ -1442,7 +1437,7 @@ async function processRecordedAudio(){
     const result=await secureNameCandidatesFromAudio();recordedName=result.base||'';showChoices(result.candidates);recordState='idle';updateDualState();
   }catch(err){
     console.warn('Private audio name engine unavailable',err);recordState='idle';resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');
-    statusEl.textContent=code==='typed-mismatch'?((V2_MESSAGES[sel.value]||V2_MESSAGES.en).mismatch):((code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error'));updateDualState();
+    statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();
   }
 }
 
@@ -1456,8 +1451,10 @@ async function startAudioCapture(){
     clearRecordTimer();stopRing();stopVoiceActivityMonitor();
     if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
     const blob=new Blob(recordedChunks,{type:mediaRecorder?.mimeType||'audio/webm'});recordedAudioBlob=blob.size>=256?blob:null;recordedAudioUrl=recordedAudioBlob?URL.createObjectURL(recordedAudioBlob):null;
+    const shouldAnalyze=recordState==='stopping'&&!!recordedAudioBlob;
     stopTracks();mediaRecorder=null;recordState='idle';mic.classList.remove('listening');setMicState('ready');setRingProgress(recordedAudioBlob?1:0);updateDualState();
     if(!recordedAudioBlob){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).noName||'No name was recognized. Please record again.';}
+    else if(shouldAnalyze){setTimeout(()=>processRecordedAudio(),0);}
   };
   mediaRecorder.start();
 }
@@ -1478,7 +1475,7 @@ async function beginRecording(e){
 function releaseRecording(e){
   if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;e?.preventDefault?.();
   if(pointerId!==null){try{mic.releasePointerCapture(pointerId)}catch(_e){}}pointerId=null;
-  // V32: releasing the button does NOT stop the recording. Silence/8-second limit does.
+  // V34: releasing the button does NOT stop the recording. Silence/8-second limit does.
 }
 function resetRecording(clearStatusToo=true){
   clearRecordTimer();stopRing();stopVoiceActivityMonitor();
@@ -1487,13 +1484,11 @@ function resetRecording(clearStatusToo=true){
   if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');updateDualState();if(clearStatusToo)clearStatus();
 }
 
-window.__nameEngineNextSelfTest=()=>({version:32,recordingOnly:false,directAudioModel:true,typedInput:true,crossCheck:true,audioAnalyzedBeforeTyped:true,browserSpeechRecognition:false,whisperPass:false,thirdPartySpeech:false,privateRules:true,opaquePlaybackToken:true,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,analysisEndpoint:V32_API_ENDPOINT,speakEndpoint:V32_SPEAK_ENDPOINT});
+window.__nameEngineNextSelfTest=()=>({version:34,recordingOnly:true,directAudioModel:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,whisperPass:false,thirdPartySpeech:false,privateRules:true,opaquePlaybackToken:true,autoAnalyzeAfterRecording:true,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,analysisEndpoint:V34_API_ENDPOINT,speakEndpoint:V34_SPEAK_ENDPOINT});
 
 ensureRecorderLayout();
 mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',releaseRecording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
 const againMain=document.getElementById('again');if(againMain)againMain.onclick=()=>resetRecording();
-const typedNameInput=document.getElementById('typedName');if(typedNameInput)typedNameInput.addEventListener('input',()=>{resultBox.style.display='none';document.getElementById('choices').hidden=true;clearStatus();updateDualState();});
-const discoverButton=document.getElementById('discoverBtn');if(discoverButton)discoverButton.addEventListener('click',()=>{if(!discoverButton.disabled)processRecordedAudio();});
 render(detectLang());
 
 
@@ -1535,7 +1530,6 @@ document.addEventListener('DOMContentLoaded',function(){
 #status{position:static!important;display:block!important;margin:6px auto 0!important;min-height:0!important;line-height:1.35!important}
 .error-message{color:#ff5b5b!important;font-weight:800!important}
 #status.error-message{color:#ff5b5b!important;background:rgba(180,25,25,.13)!important;border:1px solid rgba(255,91,91,.55)!important;border-radius:10px!important;padding:10px 12px!important;font-weight:800!important}
-#typedName:invalid{box-shadow:none!important}
 #foot{display:none!important}
 .discover-btn.ready,.discover-btn:not(:disabled){opacity:1!important;filter:none!important;background:linear-gradient(180deg,#f2d36b,#d4ae49)!important;color:#111!important;border-color:#e6c75f!important;cursor:pointer!important;box-shadow:0 0 0 1px rgba(242,211,107,.18),0 8px 22px rgba(0,0,0,.2)!important}
 .discover-btn:disabled{opacity:.38!important;cursor:not-allowed!important}
@@ -1586,7 +1580,7 @@ document.addEventListener('DOMContentLoaded',function(){
 }
 </style>
 
-<style id="v29-recording-only-scope">
+<style id="v34-recording-only-scope">
 
 .dual-inputs{grid-template-columns:1fr!important}
 </style>
@@ -1621,7 +1615,6 @@ document.addEventListener('DOMContentLoaded',function(){
   margin:0!important;
   padding:0!important;
   contain:layout style;
-  view-transition-name:v30-top-shell;
 }
 .top > :first-child,
 .top > .title-block{
@@ -1680,7 +1673,6 @@ document.addEventListener('DOMContentLoaded',function(){
   padding:0!important;
   box-sizing:border-box!important;
   contain:layout style;
-  view-transition-name:v30-navigation;
 }
 .page-nav #navName,.nav #navName{grid-column:1!important;grid-row:1!important;}
 .page-nav #navMeaning,.nav #navMeaning{grid-column:2!important;grid-row:1!important;}
@@ -1704,18 +1696,6 @@ document.addEventListener('DOMContentLoaded',function(){
   white-space:normal!important;
   text-overflow:clip!important;
 }
-.brand-hero{view-transition-name:v30-brand;}
-/* Cross-document View Transitions: shell stays visually anchored; page content cross-fades. */
-@view-transition{navigation:auto;}
-::view-transition-group(v30-brand),
-::view-transition-group(v30-top-shell),
-::view-transition-group(v30-navigation){animation-duration:0s;}
-::view-transition-old(root){animation:v30-fade-out 150ms ease-out both;}
-::view-transition-new(root){animation:v30-fade-in 220ms cubic-bezier(.2,.7,.2,1) both;}
-@keyframes v30-fade-out{to{opacity:.86;}}
-@keyframes v30-fade-in{from{opacity:.86;}to{opacity:1;}}
-html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:translateY(1px);}
-.wrap > :not(.top):not(.page-nav){transition:opacity 110ms ease,transform 110ms ease;}
 @media(max-width:760px){
   :root{--v30-page-pad:10px;--v30-top-height:176px;--v30-nav-gap:5px;}
   .top{
@@ -1751,14 +1731,10 @@ html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:tr
     font-size:clamp(9.5px,2.75vw,12px)!important;padding:7px 3px!important;
   }
 }
-@media(prefers-reduced-motion:reduce){
-  ::view-transition-old(root),::view-transition-new(root){animation:none!important;}
-  .wrap > :not(.top):not(.page-nav){transition:none!important;}
-}
 </style>\n
 <script id="v30-navigation-smoothing">
 (()=>{
-  /* Prefetch sibling pages after first paint so normal navigation feels immediate. */
+  /* Prefetch sibling pages after first paint; navigation itself remains native and immediate. */
   const pages=['index.html','LetterMeaning.html','VoiceFun.html'];
   const prefetch=()=>pages.forEach(href=>{
     if(location.pathname.endsWith('/'+href)||location.pathname.endsWith(href)) return;
@@ -1766,18 +1742,6 @@ html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:tr
     const l=document.createElement('link'); l.rel='prefetch'; l.href=href; l.as='document'; document.head.appendChild(l);
   });
   if('requestIdleCallback' in window) requestIdleCallback(prefetch,{timeout:1200}); else setTimeout(prefetch,250);
-
-  /* Fallback polish for browsers without cross-document View Transitions. */
-  document.addEventListener('click',e=>{
-    const a=e.target.closest('a[href]');
-    if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
-    const raw=a.getAttribute('href')||'';
-    if(!/^(?:index|LetterMeaning|VoiceFun)\.html(?:[?#].*)?$/.test(raw)) return;
-    if(document.startViewTransition) return;
-    e.preventDefault();
-    document.documentElement.classList.add('v30-page-leaving');
-    setTimeout(()=>{location.href=a.href;},105);
-  },true);
 })();
 </script>\n</body>
 </html>

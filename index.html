@@ -1485,7 +1485,6 @@ document.addEventListener('DOMContentLoaded',function(){
   margin:0!important;
   padding:0!important;
   contain:layout style;
-  view-transition-name:v30-top-shell;
 }
 .top > :first-child,
 .top > .title-block{
@@ -1544,7 +1543,6 @@ document.addEventListener('DOMContentLoaded',function(){
   padding:0!important;
   box-sizing:border-box!important;
   contain:layout style;
-  view-transition-name:v30-navigation;
 }
 .page-nav #navName,.nav #navName{grid-column:1!important;grid-row:1!important;}
 .page-nav #navMeaning,.nav #navMeaning{grid-column:2!important;grid-row:1!important;}
@@ -1568,18 +1566,6 @@ document.addEventListener('DOMContentLoaded',function(){
   white-space:normal!important;
   text-overflow:clip!important;
 }
-.brand-hero{view-transition-name:v30-brand;}
-/* Cross-document View Transitions: shell stays visually anchored; page content cross-fades. */
-@view-transition{navigation:auto;}
-::view-transition-group(v30-brand),
-::view-transition-group(v30-top-shell),
-::view-transition-group(v30-navigation){animation-duration:0s;}
-::view-transition-old(root){animation:v30-fade-out 150ms ease-out both;}
-::view-transition-new(root){animation:v30-fade-in 220ms cubic-bezier(.2,.7,.2,1) both;}
-@keyframes v30-fade-out{to{opacity:.86;}}
-@keyframes v30-fade-in{from{opacity:.86;}to{opacity:1;}}
-html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:translateY(1px);}
-.wrap > :not(.top):not(.page-nav){transition:opacity 110ms ease,transform 110ms ease;}
 @media(max-width:760px){
   :root{--v30-page-pad:10px;--v30-top-height:176px;--v30-nav-gap:5px;}
   .top{
@@ -1615,14 +1601,10 @@ html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:tr
     font-size:clamp(9.5px,2.75vw,12px)!important;padding:7px 3px!important;
   }
 }
-@media(prefers-reduced-motion:reduce){
-  ::view-transition-old(root),::view-transition-new(root){animation:none!important;}
-  .wrap > :not(.top):not(.page-nav){transition:none!important;}
-}
 </style>\n
 <script id="v30-navigation-smoothing">
 (()=>{
-  /* Prefetch sibling pages after first paint so normal navigation feels immediate. */
+  /* Prefetch sibling pages after first paint; navigation itself remains native and immediate. */
   const pages=['index.html','LetterMeaning.html','VoiceFun.html'];
   const prefetch=()=>pages.forEach(href=>{
     if(location.pathname.endsWith('/'+href)||location.pathname.endsWith(href)) return;
@@ -1630,18 +1612,6 @@ html.v30-page-leaving .wrap > :not(.top):not(.page-nav){opacity:.82;transform:tr
     const l=document.createElement('link'); l.rel='prefetch'; l.href=href; l.as='document'; document.head.appendChild(l);
   });
   if('requestIdleCallback' in window) requestIdleCallback(prefetch,{timeout:1200}); else setTimeout(prefetch,250);
-
-  /* Fallback polish for browsers without cross-document View Transitions. */
-  document.addEventListener('click',e=>{
-    const a=e.target.closest('a[href]');
-    if(!a||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
-    const raw=a.getAttribute('href')||'';
-    if(!/^(?:index|LetterMeaning|VoiceFun)\.html(?:[?#].*)?$/.test(raw)) return;
-    if(document.startViewTransition) return;
-    e.preventDefault();
-    document.documentElement.classList.add('v30-page-leaving');
-    setTimeout(()=>{location.href=a.href;},105);
-  },true);
 })();
 </script>\n</body>
 </html>
