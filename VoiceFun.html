@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<!-- Official release: Version 32 — private OpenAI end-to-end acoustic engine -->
+<!-- Official release: Version 37 — free local audio + private rules -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ThePowerOfHebrew — My Name in Hebrew — v27</title>
@@ -1297,20 +1297,20 @@ function isPlausibleHebrewCandidate(name){
   return n.split(/\s+/).every(w=>[...w].filter(c=>/[א-ת]/.test(c)).length>=2);
 }
 
-/* Version 36 — one private OpenAI pipeline.
+/* Version 37 — free local-audio test path.
    Tap once -> speak -> automatic stop after ~1s silence (8s hard maximum).
-   The recording is the only input and is analyzed automatically after recording stops.
-   There is no typed-name field and no typed-name cross-check in this test phase.
-   No browser speech recognition, no Whisper pass and no third-party speech engine. */
-const V34_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
-const V34_API_ENDPOINT=V34_API_BASE+'/api/name-candidates';
-const V34_SPEAK_ENDPOINT=V34_API_BASE+'/api/speak';
+   Audio transcription runs locally in the browser with a cached Whisper model.
+   The audio recording never leaves the device. Only short text hypotheses are sent
+   to our private Cloudflare Worker, which applies the private Hebrew rules.
+   No paid OpenAI API and no typed-name cross-check are used in this test phase. */
+const V37_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
+const V37_API_ENDPOINT=V37_API_BASE+'/api/name-candidates';
 const mic=document.getElementById('mic'),statusEl=document.getElementById('status'),resultBox=document.getElementById('resultBox');
 let mediaRecorder=null,mediaStream=null,recordedChunks=[],recordedAudioUrl=null,recordedAudioBlob=null;
 let recordState='idle',recordStartedAt=0,recordMaxTimer=null,ringRaf=null,pointerId=null;
 let vadCtx=null,vadAnalyser=null,vadSource=null,vadTimer=null,vadSpeechSeen=false,vadSpeechStartedAt=0,vadLastVoiceAt=0,vadNoiseFloor=.006,vadVoiceFrames=0;
 
-const TAP_HINT={he:'לחץ פעם אחת על המיקרופון כדי להקליט',en:'Press and hold the microphone to record',ar:'اضغط مطولاً على الميكروفون للتسجيل',bn:'রেকর্ড করতে মাইক্রোফোন চেপে ধরে রাখুন',zh:'按住麦克风进行录音',nl:'Houd de microfoon ingedrukt om op te nemen',fil:'Pindutin at hawakan ang mikropono para mag-record',fr:'Maintenez le microphone enfoncé pour enregistrer',de:'Mikrofon gedrückt halten, um aufzunehmen',el:'Κρατήστε πατημένο το μικρόφωνο για εγγραφή',hi:'रिकॉर्ड करने के लिए माइक्रोफ़ोन दबाकर रखें',id:'Tekan dan tahan mikrofon untuk merekam',it:'Tieni premuto il microfono per registrare',ja:'マイクを長押しして録音',ko:'녹음하려면 마이크를 길게 누르세요',ms:'Tekan dan tahan mikrofon untuk merakam',fa:'برای ضبط، میکروفون را نگه دارید',pl:'Przytrzymaj mikrofon, aby nagrać',pt:'Pressione e segure o microfone para gravar',ru:'Нажмите и удерживайте микрофон для записи',es:'Mantén pulsado el micrófono para grabar',sw:'Bonyeza na ushikilie maikrofoni kurekodi',th:'กดไมโครโฟนค้างไว้เพื่อบันทึก',tr:'Kaydetmek için mikrofona basılı tutun',uk:'Натисніть і утримуйте мікрофон для запису',ur:'ریکارڈ کرنے کے لیے مائیکروفون دبا کر رکھیں',vi:'Nhấn và giữ micrô để ghi âm'};
+const TAP_HINT={he:'לחץ פעם אחת על המיקרופון כדי להקליט',en:'Tap the microphone to record',ar:'اضغط على الميكروفون للتسجيل',bn:'রেকর্ড করতে মাইক্রোফোনে ট্যাপ করুন',zh:'点击麦克风录音',nl:'Tik op de microfoon om op te nemen',fil:'I-tap ang mikropono para mag-record',fr:'Touchez le microphone pour enregistrer',de:'Tippe auf das Mikrofon zum Aufnehmen',el:'Πατήστε το μικρόφωνο για εγγραφή',hi:'रिकॉर्ड करने के लिए माइक्रोफ़ोन टैप करें',id:'Ketuk mikrofon untuk merekam',it:'Tocca il microfono per registrare',ja:'マイクをタップして録音',ko:'녹음하려면 마이크를 탭하세요',ms:'Ketik mikrofon untuk merakam',fa:'برای ضبط روی میکروفون بزنید',pl:'Dotknij mikrofonu, aby nagrać',pt:'Toque no microfone para gravar',ru:'Нажмите на микрофон для записи',es:'Toca el micrófono para grabar',sw:'Gusa maikrofoni kurekodi',th:'แตะไมโครโฟนเพื่อบันทึก',tr:'Kaydetmek için mikrofona dokunun',uk:'Натисніть мікрофон для запису',ur:'ریکارڈ کرنے کے لیے مائیکروفون پر ٹیپ کریں',vi:'Chạm vào micrô để ghi âm'};
 function setRingProgress(p){const v=Math.max(0,Math.min(1,p));mic.style.setProperty('--ring-pct',(v*100)+'%');}
 function setMicState(state){const code=sel.value||'en';mic.dataset.state=state;mic.setAttribute('aria-pressed',state==='listening'?'true':'false');mic.setAttribute('aria-label',state==='listening'?((T[code]||T.en).listening||'Recording'):(TAP_HINT[code]||TAP_HINT.en));}
 function clearStatus(){statusEl.classList.remove('error-message');statusEl.textContent='';}
@@ -1318,194 +1318,67 @@ function stopTracks(){try{mediaStream?.getTracks().forEach(t=>t.stop())}catch(_e
 function stopRing(){if(ringRaf){cancelAnimationFrame(ringRaf);ringRaf=null;}}
 function animateRing(){stopRing();const tick=()=>{if(recordState!=='recording')return;setRingProgress(Math.min(.96,(performance.now()-recordStartedAt)/8000));ringRaf=requestAnimationFrame(tick);};ringRaf=requestAnimationFrame(tick);}
 function clearRecordTimer(){if(recordMaxTimer){clearTimeout(recordMaxTimer);recordMaxTimer=null;}}
-function stopVoiceActivityMonitor(){
-  if(vadTimer){clearInterval(vadTimer);vadTimer=null;}
-  try{vadSource?.disconnect()}catch(_e){}try{vadAnalyser?.disconnect()}catch(_e){}
-  if(vadCtx){try{vadCtx.close()}catch(_e){}}
-  vadCtx=null;vadAnalyser=null;vadSource=null;
-}
+function stopVoiceActivityMonitor(){if(vadTimer){clearInterval(vadTimer);vadTimer=null;}try{vadSource?.disconnect()}catch(_e){}try{vadAnalyser?.disconnect()}catch(_e){}if(vadCtx){try{vadCtx.close()}catch(_e){}}vadCtx=null;vadAnalyser=null;vadSource=null;}
 function startVoiceActivityMonitor(stream){
   stopVoiceActivityMonitor();const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
-  try{
-    vadCtx=new Ctx();if(vadCtx.state==='suspended')vadCtx.resume().catch(()=>{});vadAnalyser=vadCtx.createAnalyser();vadAnalyser.fftSize=1024;vadSource=vadCtx.createMediaStreamSource(stream);vadSource.connect(vadAnalyser);
-    const data=new Float32Array(vadAnalyser.fftSize);vadSpeechSeen=false;vadSpeechStartedAt=0;vadLastVoiceAt=0;vadNoiseFloor=.006;vadVoiceFrames=0;
-    vadTimer=setInterval(()=>{
-      if(recordState!=='recording'||!vadAnalyser)return;
-      vadAnalyser.getFloatTimeDomainData(data);let sum=0;for(const v of data)sum+=v*v;
-      const rms=Math.sqrt(sum/data.length),elapsed=performance.now()-recordStartedAt,threshold=Math.max(.012,vadNoiseFloor*2.8+.0035),voice=rms>threshold;
-      if(!vadSpeechSeen&&elapsed<500&&!voice)vadNoiseFloor=vadNoiseFloor*.82+rms*.18;
-      if(voice){vadVoiceFrames++;if(vadVoiceFrames>=2){if(!vadSpeechSeen){vadSpeechSeen=true;vadSpeechStartedAt=performance.now();}vadLastVoiceAt=performance.now();}}
-      else vadVoiceFrames=Math.max(0,vadVoiceFrames-1);
-      if(vadSpeechSeen&&performance.now()-vadLastVoiceAt>=1000&&performance.now()-vadSpeechStartedAt>=280){stopRecording('silence');}
-    },50);
-  }catch(_e){stopVoiceActivityMonitor();}
+  try{vadCtx=new Ctx();if(vadCtx.state==='suspended')vadCtx.resume().catch(()=>{});vadAnalyser=vadCtx.createAnalyser();vadAnalyser.fftSize=1024;vadSource=vadCtx.createMediaStreamSource(stream);vadSource.connect(vadAnalyser);const data=new Float32Array(vadAnalyser.fftSize);vadSpeechSeen=false;vadSpeechStartedAt=0;vadLastVoiceAt=0;vadNoiseFloor=.006;vadVoiceFrames=0;vadTimer=setInterval(()=>{if(recordState!=='recording'||!vadAnalyser)return;vadAnalyser.getFloatTimeDomainData(data);let sum=0;for(const v of data)sum+=v*v;const rms=Math.sqrt(sum/data.length),elapsed=performance.now()-recordStartedAt,threshold=Math.max(.012,vadNoiseFloor*2.8+.0035),voice=rms>threshold;if(!vadSpeechSeen&&elapsed<500&&!voice)vadNoiseFloor=vadNoiseFloor*.82+rms*.18;if(voice){vadVoiceFrames++;if(vadVoiceFrames>=2){if(!vadSpeechSeen){vadSpeechSeen=true;vadSpeechStartedAt=performance.now();}vadLastVoiceAt=performance.now();}}else vadVoiceFrames=Math.max(0,vadVoiceFrames-1);if(vadSpeechSeen&&performance.now()-vadLastVoiceAt>=1000&&performance.now()-vadSpeechStartedAt>=280){stopRecording('silence');}},50);}catch(_e){stopVoiceActivityMonitor();}
 }
-
-function recorderButtonMarkup(id,kind,label){
-  const icon=kind==='play'?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 5a7 7 0 1 1-6.32 4H3l3.5-3.5L10 9H7.72A5 5 0 1 0 12 7V5z"/></svg>';
-  return '<button type="button" id="'+id+'" class="recorder-tool" disabled>'+icon+'<span>'+escapeHtml(label)+'</span></button>';
-}
-function ensureRecorderLayout(){
-  const first=document.querySelector('.dual-inputs .required-field:first-child'),check=document.getElementById('recordCheck');if(!first||!mic||!check)return;
-  let row=document.getElementById('recorderActionRow');
-  if(!row){row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';const stack=document.createElement('div');stack.className='recorder-mic-stack';stack.appendChild(mic);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);}
-  else{const stack=row.querySelector('.recorder-mic-stack');if(stack&&mic.parentNode!==stack)stack.appendChild(mic);}
-  if(check.parentNode!==first)first.appendChild(check);renderRecordingTools();
-}
-function renderRecordingTools(){
-  const box=document.getElementById('recordingTools');if(!box)return;const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en,enabled=!!recordedAudioBlob&&recordState==='idle';
-  box.hidden=false;box.innerHTML=recorderButtonMarkup('playRecording','play',vm.listen)+recorderButtonMarkup('recordAgain','again',vm.again);
-  const play=document.getElementById('playRecording'),againBtn=document.getElementById('recordAgain');play.disabled=!enabled;againBtn.disabled=!enabled;
-  play.onclick=()=>{if(recordedAudioUrl&&!play.disabled)new Audio(recordedAudioUrl).play().catch(()=>{});};
-  againBtn.onclick=()=>{if(!againBtn.disabled)resetRecording();};
-}
+function recorderButtonMarkup(id,kind,label){const icon=kind==='play'?'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>':'<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 5a7 7 0 1 1-6.32 4H3l3.5-3.5L10 9H7.72A5 5 0 1 0 12 7V5z"/></svg>';return '<button type="button" id="'+id+'" class="recorder-tool" disabled>'+icon+'<span>'+escapeHtml(label)+'</span></button>';}
+function ensureRecorderLayout(){const first=document.querySelector('.dual-inputs .required-field:first-child'),check=document.getElementById('recordCheck');if(!first||!mic||!check)return;let row=document.getElementById('recorderActionRow');if(!row){row=document.createElement('div');row.id='recorderActionRow';row.className='recorder-action-row';const tools=document.createElement('div');tools.id='recordingTools';tools.className='recording-tools';const stack=document.createElement('div');stack.className='recorder-mic-stack';stack.appendChild(mic);row.appendChild(tools);row.appendChild(stack);first.appendChild(row);}else{const stack=row.querySelector('.recorder-mic-stack');if(stack&&mic.parentNode!==stack)stack.appendChild(mic);}if(check.parentNode!==first)first.appendChild(check);renderRecordingTools();}
+function renderRecordingTools(){const box=document.getElementById('recordingTools');if(!box)return;const vm=V2_MESSAGES[sel.value]||V2_MESSAGES.en,enabled=!!recordedAudioBlob&&recordState==='idle';box.hidden=false;box.innerHTML=recorderButtonMarkup('playRecording','play',vm.listen)+recorderButtonMarkup('recordAgain','again',vm.again);const play=document.getElementById('playRecording'),againBtn=document.getElementById('recordAgain');play.disabled=!enabled;againBtn.disabled=!enabled;play.onclick=()=>{if(recordedAudioUrl&&!play.disabled)new Audio(recordedAudioUrl).play().catch(()=>{});};againBtn.onclick=()=>{if(!againBtn.disabled)resetRecording();};}
 function setSuccessCheck(el,label){el.textContent='';const clean=String(label||'').replace(/✓/g,'').trim(),mark=document.createElement('span'),text=document.createElement('span');mark.className='success-check';mark.textContent='✓';text.className='check-label';text.textContent=clean;el.appendChild(mark);el.appendChild(text);}
-function updateDualState(){
-  const u=UX[sel.value]||UX.en,hasRecording=!!recordedAudioBlob,rc=document.getElementById('recordCheck');
-  if(rc){rc.textContent='';if(hasRecording){setSuccessCheck(rc,u.recorded);setRingProgress(1);}}
-  renderRecordingTools();
-}
+function updateDualState(){const u=UX[sel.value]||UX.en,hasRecording=!!recordedAudioBlob,rc=document.getElementById('recordCheck');if(rc){rc.textContent='';if(hasRecording){setSuccessCheck(rc,u.recorded);setRingProgress(1);}}renderRecordingTools();}
 
-let currentCandidateAudio=null,currentCandidateAudioUrl=null;
-function v36DiagnosticText(code,kind='recognition'){
-  const c=String(code||'unknown-error');
-  if((sel.value||'en')==='he'){
-    const m={
-      'openai-key-missing':'שירות OpenAI אינו מוגדר בשרת',
-      'openai-auth':'אימות OpenAI בשרת נכשל',
-      'openai-model':'מודל האודיו אינו זמין',
-      'openai-rate-limit':'שירות האודיו עמוס כרגע',
-      'openai-network':'השרת לא הצליח להתחבר ל-OpenAI',
-      'openai-upstream':'תקלה זמנית בשירות OpenAI',
-      'bad-model-output':'התקבל פלט אודיו לא תקין',
-      'deterministic-segments-required':'לא התקבל פירוק צלילים תקין',
-      'speak-failed':'הקריינות נכשלה',
-      'audio-format':'פורמט ההקלטה אינו תקין'
-    };
+function v37DiagnosticText(code,kind='recognition'){
+  const c=String(code||'unknown-error');if((sel.value||'en')==='he'){
+    const m={'local-model-load':'לא ניתן לטעון את מנוע הקול המקומי','local-transcription':'הפענוח המקומי נכשל','no-candidates':'לא נמצאו חלופות מתאימות','hypotheses-required':'לא התקבל פענוח קולי','engine-network':'לא ניתן להגיע למנוע החוקים הפרטי','tts-unavailable':'אין במכשיר מנוע הקראה עברי זמין','tts-failed':'הקריינות המקומית נכשלה'};
     return (m[c]||(kind==='playback'?'שגיאת קריינות':'שגיאת זיהוי דיבור'))+' ['+c+']';
   }
-  const base=kind==='playback'?'Audio playback error':((T[sel.value]||T.en).speechError||'Speech recognition error');
-  return base+' ['+c+']';
+  return (kind==='playback'?'Audio playback error':'Speech recognition error')+' ['+c+']';
 }
-function candidatePlaybackError(code='speak-failed'){statusEl.classList.add('error-message');statusEl.textContent=v36DiagnosticText(code,'playback');}
-async function speakCandidate(candidate){
-  const playbackToken=String(candidate?.playbackToken||'').trim();
-  if(!playbackToken||!V34_API_BASE){candidatePlaybackError();return;}
-  try{
-    if(currentCandidateAudio){try{currentCandidateAudio.pause()}catch(_e){}}
-    if(currentCandidateAudioUrl){try{URL.revokeObjectURL(currentCandidateAudioUrl)}catch(_e){}currentCandidateAudioUrl=null;}
-    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let res;
-    try{res=await fetch(V34_SPEAK_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({playbackToken}),signal:controller.signal});}
-    finally{clearTimeout(timer);}
-    if(!res.ok){let d=null;try{d=await res.json();}catch(_e){}throw new Error(String(d?.error||('playback-http-'+res.status)));}
-    const blob=await res.blob();if(!blob.size)throw new Error('playback-empty');
-    currentCandidateAudioUrl=URL.createObjectURL(blob);currentCandidateAudio=new Audio(currentCandidateAudioUrl);
-    currentCandidateAudio.onended=()=>{if(currentCandidateAudioUrl){try{URL.revokeObjectURL(currentCandidateAudioUrl)}catch(_e){}currentCandidateAudioUrl=null;}currentCandidateAudio=null;};
-    await currentCandidateAudio.play();
-  }catch(e){candidatePlaybackError(String(e?.message||'speak-failed'));}
+function candidatePlaybackError(code='tts-failed'){statusEl.classList.add('error-message');statusEl.textContent=v37DiagnosticText(code,'playback');}
+function chooseHebrewVoice(){const voices=speechSynthesis.getVoices?.()||[];return voices.find(v=>/^he([-_]|$)/i.test(v.lang)&&/female|woman|carmit|hebrew/i.test(v.name))||voices.find(v=>/^he([-_]|$)/i.test(v.lang))||null;}
+function speakCandidate(candidate){
+  if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){candidatePlaybackError('tts-unavailable');return;}
+  const text=String(candidate?.speechText||candidate?.spelling||'').trim();if(!text){candidatePlaybackError();return;}
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),voice=chooseHebrewVoice();if(voice)u.voice=voice;u.lang='he-IL';u.rate=/א/.test(text)&&text.length>2?.78:.84;u.pitch=1.02;u.onerror=()=>candidatePlaybackError('tts-failed');speechSynthesis.speak(u);}catch(_e){candidatePlaybackError('tts-failed');}
 }
-function renderFinalHebrew(candidate){
-  const code=sel.value||'en',t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,playbackToken:''}:candidate;
-  const hebrew=applyFinalForms(record.spelling||''),letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined),hebEl=document.getElementById('hebrew');
-  hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';
-  document.getElementById('resultAudioBtn').onclick=()=>speakCandidate({...record,spelling:hebrew});
-  const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');
-  document.getElementById('details').innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();
-}
-function showChoices(records){
-  const u=UX[sel.value]||UX.en,box=document.getElementById('choices'),seen=new Set();
-  records=(records||[]).map(x=>typeof x==='string'?{spelling:x,playbackToken:''}:x).map(x=>({spelling:applyFinalForms(x.spelling||''),playbackToken:String(x.playbackToken||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&x.playbackToken&&!seen.has(x.spelling)&&seen.add(x.spelling)).slice(0,64);
-  if(!records.length){box.hidden=true;return;}
-  box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+records.map((r,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(r.spelling)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';
-  box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(records[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakCandidate(records[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>resetRecording();
-}
+function renderFinalHebrew(candidate){const code=sel.value||'en',t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,speechText:candidate}:candidate;const hebrew=applyFinalForms(record.spelling||''),letters=[...hebrew].filter(ch=>GEMATRIA[ch]!==undefined),hebEl=document.getElementById('hebrew');hebEl.innerHTML='<span>'+escapeHtml(hebrew)+'</span> <button type="button" class="result-audio-btn" id="resultAudioBtn" aria-label="'+escapeHtml((V2_MESSAGES[code]||V2_MESSAGES.en).hearName)+'"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button>';document.getElementById('resultAudioBtn').onclick=()=>speakCandidate({...record,spelling:hebrew});const rows=letters.map(ch=>'<div class="name-letter-row"><a class="name-letter-char" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">'+ch+'</a> <a class="name-letter-info" href="LetterMeaning.html#letter-'+({'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'}[ch]||ch)+'">('+escapeHtml(localizedLetterName(ch,code))+', '+GEMATRIA[ch]+')</a></div>').join('');document.getElementById('details').innerHTML='<div class="name-letter-heading"><strong>'+t.letters+':</strong></div><div class="name-letter-list">'+rows+'</div><div class="name-total"><strong>'+t.value+':</strong> '+gematria(hebrew)+'</div>';resultBox.style.display='block';document.getElementById('choices').hidden=true;clearStatus();}
+function showChoices(records){const u=UX[sel.value]||UX.en,box=document.getElementById('choices'),seen=new Set();records=(records||[]).map(x=>typeof x==='string'?{spelling:x,speechText:x}:x).map(x=>({spelling:applyFinalForms(x.spelling||''),speechText:String(x.speechText||x.spelling||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&!seen.has(x.spelling)&&seen.add(x.spelling)).slice(0,64);if(!records.length){box.hidden=true;return;}box.innerHTML='<div>'+escapeHtml(u.choose)+'</div><div class="choice-grid">'+records.map((r,i)=>'<div class="choice"><button class="choice-main" type="button" data-pick="'+i+'"><div class="choice-he">'+escapeHtml(r.spelling)+'</div></button><button class="choice-audio" type="button" data-speak="'+i+'" aria-label="Listen"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 4V5L7 9H3zm11.5 3a3.5 3.5 0 0 0-1.5-2.87v5.74A3.5 3.5 0 0 0 14.5 12zm0-7.1v2.06a6 6 0 0 1 0 10.08v2.06a8 8 0 0 0 0-14.2z"/></svg></button></div>').join('')+'</div><button type="button" id="retryChoice" class="again" style="margin-top:12px">'+escapeHtml(u.retry)+'</button>';box.hidden=false;box.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>renderFinalHebrew(records[+b.dataset.pick]));box.querySelectorAll('[data-speak]').forEach(b=>b.onclick=()=>speakCandidate(records[+b.dataset.speak]));box.querySelector('#retryChoice').onclick=()=>resetRecording();}
 
-async function recordingBlobToWav(blob){
-  const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('audio-convert');
-  const ctx=new Ctx();
-  try{
-    const raw=await blob.arrayBuffer();const decoded=await ctx.decodeAudioData(raw.slice(0));
-    const channels=decoded.numberOfChannels,length=decoded.length,sampleRate=decoded.sampleRate;
-    const mono=new Float32Array(length);
-    for(let ch=0;ch<channels;ch++){const data=decoded.getChannelData(ch);for(let i=0;i<length;i++)mono[i]+=data[i]/channels;}
-    const out=new ArrayBuffer(44+length*2),view=new DataView(out);
-    const text=(o,t)=>{for(let i=0;i<t.length;i++)view.setUint8(o+i,t.charCodeAt(i));};
-    text(0,'RIFF');view.setUint32(4,36+length*2,true);text(8,'WAVE');text(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);text(36,'data');view.setUint32(40,length*2,true);
-    let off=44;for(let i=0;i<length;i++,off+=2){const x=Math.max(-1,Math.min(1,mono[i]));view.setInt16(off,x<0?x*0x8000:x*0x7fff,true);}
-    return new Blob([out],{type:'audio/wav'});
-  }finally{try{await ctx.close()}catch(_e){}}
-}
-
-async function secureNameCandidatesFromAudio(){
-  if(!recordedAudioBlob)throw new Error('audio-required');if(!V34_API_BASE||/REPLACE/i.test(V34_API_BASE))throw new Error('engine-not-configured');
-  const wavBlob=await recordingBlobToWav(recordedAudioBlob);
-  const form=new FormData();form.append('audio',wavBlob,'name.wav');
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),60000);
-  try{
-    const res=await fetch(V34_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Accept':'application/json'},body:form,signal:controller.signal});
-    let data=null;try{data=await res.json();}catch(_e){}
-    window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,stage:data?.stage||null,match:null};
-    if(!res.ok)throw new Error(String(data?.error||('secure-engine-'+res.status)));
-    const records=Array.isArray(data?.candidates)?data.candidates.map(x=>({spelling:normalizeHebrewName(x?.spelling||''),playbackToken:String(x?.playbackToken||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)&&x.playbackToken).slice(0,64):[];
-    if(!records.length)throw new Error('no-candidates');
-    return {candidates:records,base:records[0]?.spelling||'',recognition:data?.recognition||'openai-private-acoustic-v34-recording-only'};
-  }finally{clearTimeout(timer);}
-}
-async function processRecordedAudio(){
-  if(!recordedAudioBlob)return;recordState='processing';clearStatus();statusEl.textContent=(T[sel.value]||T.en).processing||'';updateDualState();
-  try{
-    const result=await secureNameCandidatesFromAudio();recordedName=result.base||'';showChoices(result.candidates);recordState='idle';updateDualState();
-  }catch(err){
-    console.warn('Private audio name engine unavailable',err);recordState='idle';resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');
-    statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):v36DiagnosticText(code,'recognition');updateDualState();
+let whisperTranscriberPromise=null,recordedAudioSamples=null;
+const WHISPER_MODEL='onnx-community/whisper-tiny';
+async function getWhisperTranscriber(){
+  if(!whisperTranscriberPromise){
+    if((sel.value||'en')==='he')statusEl.textContent='מכין מנוע קולי מקומי…';
+    whisperTranscriberPromise=import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1').then(async mod=>{if(mod.env){mod.env.allowLocalModels=false;mod.env.useBrowserCache=true;}return mod.pipeline('automatic-speech-recognition',WHISPER_MODEL);}).catch(err=>{whisperTranscriberPromise=null;console.warn('Local model load failed',err);throw new Error('local-model-load');});
   }
+  return whisperTranscriberPromise;
 }
+async function blobTo16kMono(blob){const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)throw new Error('local-transcription');const ctx=new Ctx();try{const buf=await ctx.decodeAudioData((await blob.arrayBuffer()).slice(0)),mono=new Float32Array(buf.length);for(let ch=0;ch<buf.numberOfChannels;ch++){const data=buf.getChannelData(ch);for(let i=0;i<buf.length;i++)mono[i]+=data[i]/buf.numberOfChannels;}const target=16000,sr=buf.sampleRate;let data=mono;if(sr!==target){const outLen=Math.max(1,Math.round(mono.length*target/sr)),out=new Float32Array(outLen),ratio=sr/target;for(let i=0;i<outLen;i++){const x=i*ratio,j=Math.floor(x),f=x-j,a=mono[Math.min(j,mono.length-1)],b=mono[Math.min(j+1,mono.length-1)];out[i]=a+(b-a)*f;}data=out;}const threshold=.0035,pad=Math.round(target*.18);let first=0,last=data.length-1;while(first<data.length&&Math.abs(data[first])<threshold)first++;if(first>=data.length)throw new Error('no-speech');while(last>first&&Math.abs(data[last])<threshold)last--;first=Math.max(0,first-pad);last=Math.min(data.length-1,last+pad);return data.slice(first,last+1);}finally{try{await ctx.close()}catch(_e){}}}
+async function getRecordedAudioSamples(){if(recordedAudioSamples)return recordedAudioSamples;if(!recordedAudioBlob)return null;recordedAudioSamples=await blobTo16kMono(recordedAudioBlob);return recordedAudioSamples;}
+function cleanLocalTranscript(x){return String(x||'').replace(/[.,!?;:()[\]{}]/g,' ').replace(/\s+/g,' ').trim().slice(0,160);}
+async function localWhisperPass(mode){const audio=await getRecordedAudioSamples(),transcriber=await getWhisperTranscriber(),opts={chunk_length_s:15,stride_length_s:2,task:'transcribe'};if(mode==='en')opts.language='en';if(mode==='he')opts.language='he';const out=await transcriber(audio,opts);return cleanLocalTranscript(typeof out==='string'?out:(out&&out.text)||'');}
+async function localWhisperHypotheses(){
+  const hyps=[];try{const en=await localWhisperPass('en');if(en)hyps.push({text:en,source:'whisper-latin'});}catch(e){console.warn('local whisper en',e);}
+  try{const au=await localWhisperPass('auto');if(au&&!hyps.some(h=>h.text===au))hyps.push({text:au,source:'whisper-auto'});}catch(e){console.warn('local whisper auto',e);}
+  try{const he=await localWhisperPass('he');if(he&&!hyps.some(h=>h.text===he))hyps.push({text:he,source:'whisper-hebrew'});}catch(e){console.warn('local whisper he',e);}
+  if(!hyps.length)throw new Error('local-transcription');return hyps;
+}
+async function localNameCandidatesFromAudio(){
+  if(!recordedAudioBlob)throw new Error('audio-required');if(!V37_API_BASE||/REPLACE/i.test(V37_API_BASE))throw new Error('engine-network');
+  const hypotheses=await localWhisperHypotheses(),controller=new AbortController(),timer=setTimeout(()=>controller.abort(),25000);
+  try{const res=await fetch(V37_API_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({hypotheses}),signal:controller.signal});let data=null;try{data=await res.json();}catch(_e){}window.__lastNameEngineDiagnostic={ok:res.ok,status:res.status,version:data?.version||null,error:data?.error||null,hypotheses};if(!res.ok)throw new Error(String(data?.error||'engine-network'));const records=Array.isArray(data?.candidates)?data.candidates.map(x=>({spelling:normalizeHebrewName(x?.spelling||''),speechText:String(x?.speechText||x?.spelling||'')})).filter(x=>isPlausibleHebrewCandidate(x.spelling)).slice(0,64):[];if(!records.length)throw new Error('no-candidates');return {candidates:records,base:records[0]?.spelling||'',recognition:data?.recognition||'local-browser-whisper-private-rules-v37'};}catch(e){if(e?.name==='AbortError')throw new Error('engine-network');throw e;}finally{clearTimeout(timer);}
+}
+async function processRecordedAudio(){if(!recordedAudioBlob)return;recordState='processing';clearStatus();statusEl.textContent=(T[sel.value]||T.en).processing||'';updateDualState();try{const result=await localNameCandidatesFromAudio();recordedName=result.base||'';showChoices(result.candidates);recordState='idle';updateDualState();}catch(err){console.warn('Free local name engine unavailable',err);recordState='idle';resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');statusEl.textContent=(code.includes('no-speech')||code==='audio-required')?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):v37DiagnosticText(code,'recognition');updateDualState();}}
 
-async function startAudioCapture(){
-  if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');
-  mediaStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});recordedChunks=[];
-  const preferredMime=['audio/webm;codecs=opus','audio/webm','audio/mp4;codecs=mp4a.40.2','audio/mp4'].find(t=>MediaRecorder.isTypeSupported?.(t));
-  mediaRecorder=preferredMime?new MediaRecorder(mediaStream,{mimeType:preferredMime}):new MediaRecorder(mediaStream);
-  mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data);};
-  mediaRecorder.onstop=()=>{
-    clearRecordTimer();stopRing();stopVoiceActivityMonitor();
-    if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}
-    const blob=new Blob(recordedChunks,{type:mediaRecorder?.mimeType||'audio/webm'});recordedAudioBlob=blob.size>=256?blob:null;recordedAudioUrl=recordedAudioBlob?URL.createObjectURL(recordedAudioBlob):null;
-    const shouldAnalyze=recordState==='stopping'&&!!recordedAudioBlob;
-    stopTracks();mediaRecorder=null;recordState='idle';mic.classList.remove('listening');setMicState('ready');setRingProgress(recordedAudioBlob?1:0);updateDualState();
-    if(!recordedAudioBlob){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).noName||'No name was recognized. Please record again.';}
-    else if(shouldAnalyze){setTimeout(()=>processRecordedAudio(),0);}
-  };
-  mediaRecorder.start();
-}
-function stopRecording(reason='auto'){
-  if(recordState!=='recording')return;recordState='stopping';clearRecordTimer();stopRing();stopVoiceActivityMonitor();
-  try{if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();else{stopTracks();mediaRecorder=null;recordState='idle';updateDualState();}}catch(_e){stopTracks();mediaRecorder=null;recordState='idle';updateDualState();}
-}
-function clearPreviousRecording(){
-  if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);document.getElementById('recordCheck').textContent='';clearStatus();
-}
-async function beginRecording(e){
-  if(recordState!=='idle')return;e?.preventDefault?.();pointerId=e?.pointerId??null;if(pointerId!==null){try{mic.setPointerCapture(pointerId)}catch(_e){}}
-  clearPreviousRecording();recordState='starting';updateDualState();
-  try{
-    await startAudioCapture();recordState='recording';recordStartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();startVoiceActivityMonitor(mediaStream);recordMaxTimer=setTimeout(()=>stopRecording('timeout'),8000);
-  }catch(e){recordState='idle';mediaRecorder=null;stopTracks();stopVoiceActivityMonitor();const x=T[sel.value]||T.en;statusEl.classList.add('error-message');statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);renderRecordingTools();updateDualState();}
-}
-function releaseRecording(e){
-  if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;e?.preventDefault?.();
-  if(pointerId!==null){try{mic.releasePointerCapture(pointerId)}catch(_e){}}pointerId=null;
-  // V34: releasing the button does NOT stop the recording. Silence/8-second limit does.
-}
-function resetRecording(clearStatusToo=true){
-  clearRecordTimer();stopRing();stopVoiceActivityMonitor();
-  if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}
-  stopTracks();mediaRecorder=null;recordState='idle';pointerId=null;
-  if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');updateDualState();if(clearStatusToo)clearStatus();
-}
-
-window.__nameEngineNextSelfTest=()=>({version:36,recordingOnly:true,directAudioModel:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,whisperPass:false,thirdPartySpeech:false,privateRules:true,opaquePlaybackToken:true,autoAnalyzeAfterRecording:true,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,analysisEndpoint:V34_API_ENDPOINT,speakEndpoint:V34_SPEAK_ENDPOINT});
-
+async function startAudioCapture(){if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined')throw new Error('unsupported');mediaStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1}});recordedChunks=[];const preferredMime=['audio/webm;codecs=opus','audio/webm','audio/mp4;codecs=mp4a.40.2','audio/mp4'].find(t=>MediaRecorder.isTypeSupported?.(t));mediaRecorder=preferredMime?new MediaRecorder(mediaStream,{mimeType:preferredMime}):new MediaRecorder(mediaStream);mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data);};mediaRecorder.onstop=()=>{clearRecordTimer();stopRing();stopVoiceActivityMonitor();if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}const blob=new Blob(recordedChunks,{type:mediaRecorder?.mimeType||'audio/webm'});recordedAudioBlob=blob.size>=256?blob:null;recordedAudioSamples=null;recordedAudioUrl=recordedAudioBlob?URL.createObjectURL(recordedAudioBlob):null;const shouldAnalyze=recordState==='stopping'&&!!recordedAudioBlob;stopTracks();mediaRecorder=null;recordState='idle';mic.classList.remove('listening');setMicState('ready');setRingProgress(recordedAudioBlob?1:0);updateDualState();if(!recordedAudioBlob){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).noName||'No name was recognized. Please record again.';}else if(shouldAnalyze){setTimeout(()=>processRecordedAudio(),0);}};mediaRecorder.start();}
+function stopRecording(reason='auto'){if(recordState!=='recording')return;recordState='stopping';clearRecordTimer();stopRing();stopVoiceActivityMonitor();try{if(mediaRecorder&&mediaRecorder.state!=='inactive')mediaRecorder.stop();else{stopTracks();mediaRecorder=null;recordState='idle';updateDualState();}}catch(_e){stopTracks();mediaRecorder=null;recordState='idle';updateDualState();}}
+function clearPreviousRecording(){if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedAudioSamples=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);document.getElementById('recordCheck').textContent='';clearStatus();}
+async function beginRecording(e){if(recordState!=='idle')return;e?.preventDefault?.();pointerId=e?.pointerId??null;if(pointerId!==null){try{mic.setPointerCapture(pointerId)}catch(_e){}}clearPreviousRecording();recordState='starting';updateDualState();try{await startAudioCapture();recordState='recording';recordStartedAt=performance.now();mic.classList.add('listening');setMicState('listening');animateRing();startVoiceActivityMonitor(mediaStream);recordMaxTimer=setTimeout(()=>stopRecording('timeout'),8000);}catch(e){recordState='idle';mediaRecorder=null;stopTracks();stopVoiceActivityMonitor();const x=T[sel.value]||T.en;statusEl.classList.add('error-message');statusEl.textContent=(e?.name==='NotAllowedError'||e?.name==='SecurityError')?x.blocked:(e?.name==='NotFoundError'?x.noMic:x.browser);renderRecordingTools();updateDualState();}}
+function releaseRecording(e){if(pointerId!==null&&e?.pointerId!==undefined&&e.pointerId!==pointerId)return;e?.preventDefault?.();if(pointerId!==null){try{mic.releasePointerCapture(pointerId)}catch(_e){}}pointerId=null;}
+function resetRecording(clearStatusToo=true){clearRecordTimer();stopRing();stopVoiceActivityMonitor();if(mediaRecorder&&mediaRecorder.state!=='inactive'){try{mediaRecorder.stop()}catch(_e){}}stopTracks();mediaRecorder=null;recordState='idle';pointerId=null;if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedAudioSamples=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');updateDualState();if(clearStatusToo)clearStatus();}
+window.__nameEngineNextSelfTest=()=>({version:37,recordingOnly:true,paidOpenAIAPI:false,typedInput:false,crossCheck:false,localWhisper:true,audioLeavesDevice:false,privateRules:true,localTTS:true,autoAnalyzeAfterRecording:true,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,candidateEndpoint:V37_API_ENDPOINT});
 ensureRecorderLayout();
 mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',releaseRecording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
 const againMain=document.getElementById('again');if(againMain)againMain.onclick=()=>resetRecording();
