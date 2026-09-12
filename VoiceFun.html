@@ -1297,10 +1297,10 @@ function isPlausibleHebrewCandidate(name){
   return n.split(/\s+/).every(w=>[...w].filter(c=>/[א-ת]/.test(c)).length>=2);
 }
 
-/* Version 32 — one private OpenAI pipeline.
+/* Version 36 — one private OpenAI pipeline.
    Tap once -> speak -> automatic stop after ~1s silence (8s hard maximum).
-   The recording is kept locally until the user types the name and presses Discover.
-   The server analyzes audio FIRST, independently of the typed text; typing is secondary cross-check only.
+   The recording is the only input and is analyzed automatically after recording stops.
+   There is no typed-name field and no typed-name cross-check in this test phase.
    No browser speech recognition, no Whisper pass and no third-party speech engine. */
 const V34_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||window.V17_API_BASE||'').replace(/\/$/,'');
 const V34_API_ENDPOINT=V34_API_BASE+'/api/name-candidates';
@@ -1367,7 +1367,27 @@ function updateDualState(){
 }
 
 let currentCandidateAudio=null,currentCandidateAudioUrl=null;
-function candidatePlaybackError(){statusEl.classList.add('error-message');statusEl.textContent=(T[sel.value]||T.en).speechError||'Playback unavailable';}
+function v36DiagnosticText(code,kind='recognition'){
+  const c=String(code||'unknown-error');
+  if((sel.value||'en')==='he'){
+    const m={
+      'openai-key-missing':'שירות OpenAI אינו מוגדר בשרת',
+      'openai-auth':'אימות OpenAI בשרת נכשל',
+      'openai-model':'מודל האודיו אינו זמין',
+      'openai-rate-limit':'שירות האודיו עמוס כרגע',
+      'openai-network':'השרת לא הצליח להתחבר ל-OpenAI',
+      'openai-upstream':'תקלה זמנית בשירות OpenAI',
+      'bad-model-output':'התקבל פלט אודיו לא תקין',
+      'deterministic-segments-required':'לא התקבל פירוק צלילים תקין',
+      'speak-failed':'הקריינות נכשלה',
+      'audio-format':'פורמט ההקלטה אינו תקין'
+    };
+    return (m[c]||(kind==='playback'?'שגיאת קריינות':'שגיאת זיהוי דיבור'))+' ['+c+']';
+  }
+  const base=kind==='playback'?'Audio playback error':((T[sel.value]||T.en).speechError||'Speech recognition error');
+  return base+' ['+c+']';
+}
+function candidatePlaybackError(code='speak-failed'){statusEl.classList.add('error-message');statusEl.textContent=v36DiagnosticText(code,'playback');}
 async function speakCandidate(candidate){
   const playbackToken=String(candidate?.playbackToken||'').trim();
   if(!playbackToken||!V34_API_BASE){candidatePlaybackError();return;}
@@ -1377,12 +1397,12 @@ async function speakCandidate(candidate){
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let res;
     try{res=await fetch(V34_SPEAK_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({playbackToken}),signal:controller.signal});}
     finally{clearTimeout(timer);}
-    if(!res.ok)throw new Error('playback-failed');
+    if(!res.ok){let d=null;try{d=await res.json();}catch(_e){}throw new Error(String(d?.error||('playback-http-'+res.status)));}
     const blob=await res.blob();if(!blob.size)throw new Error('playback-empty');
     currentCandidateAudioUrl=URL.createObjectURL(blob);currentCandidateAudio=new Audio(currentCandidateAudioUrl);
     currentCandidateAudio.onended=()=>{if(currentCandidateAudioUrl){try{URL.revokeObjectURL(currentCandidateAudioUrl)}catch(_e){}currentCandidateAudioUrl=null;}currentCandidateAudio=null;};
     await currentCandidateAudio.play();
-  }catch(_e){candidatePlaybackError();}
+  }catch(e){candidatePlaybackError(String(e?.message||'speak-failed'));}
 }
 function renderFinalHebrew(candidate){
   const code=sel.value||'en',t=T[code]||T.en,record=typeof candidate==='string'?{spelling:candidate,playbackToken:''}:candidate;
@@ -1437,7 +1457,7 @@ async function processRecordedAudio(){
     const result=await secureNameCandidatesFromAudio();recordedName=result.base||'';showChoices(result.candidates);recordState='idle';updateDualState();
   }catch(err){
     console.warn('Private audio name engine unavailable',err);recordState='idle';resultBox.style.display='none';document.getElementById('choices').hidden=true;statusEl.classList.add('error-message');const code=String(err?.message||'');
-    statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):((T[sel.value]||T.en).speechError||'Speech recognition error');updateDualState();
+    statusEl.textContent=(code==='no-heard'||code==='audio-empty'||code==='audio-required'||code.includes('no-speech'))?((T[sel.value]||T.en).noName||'No name was recognized. Please record again.'):v36DiagnosticText(code,'recognition');updateDualState();
   }
 }
 
@@ -1484,7 +1504,7 @@ function resetRecording(clearStatusToo=true){
   if(recordedAudioUrl){try{URL.revokeObjectURL(recordedAudioUrl)}catch(_e){}}recordedAudioUrl=null;recordedAudioBlob=null;recordedChunks=[];recordedName='';resultBox.style.display='none';document.getElementById('choices').hidden=true;setRingProgress(0);mic.classList.remove('listening');setMicState('ready');updateDualState();if(clearStatusToo)clearStatus();
 }
 
-window.__nameEngineNextSelfTest=()=>({version:34,recordingOnly:true,directAudioModel:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,whisperPass:false,thirdPartySpeech:false,privateRules:true,opaquePlaybackToken:true,autoAnalyzeAfterRecording:true,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,analysisEndpoint:V34_API_ENDPOINT,speakEndpoint:V34_SPEAK_ENDPOINT});
+window.__nameEngineNextSelfTest=()=>({version:36,recordingOnly:true,directAudioModel:true,typedInput:false,crossCheck:false,browserSpeechRecognition:false,whisperPass:false,thirdPartySpeech:false,privateRules:true,opaquePlaybackToken:true,autoAnalyzeAfterRecording:true,autoStopSilenceMs:1000,hardStopMs:8000,releaseStopsRecording:false,analysisEndpoint:V34_API_ENDPOINT,speakEndpoint:V34_SPEAK_ENDPOINT});
 
 ensureRecorderLayout();
 mic.addEventListener('pointerdown',beginRecording);mic.addEventListener('pointerup',releaseRecording);mic.addEventListener('pointercancel',releaseRecording);mic.addEventListener('lostpointercapture',releaseRecording);mic.addEventListener('click',e=>e.preventDefault());mic.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1731,6 +1751,11 @@ document.addEventListener('DOMContentLoaded',function(){
     font-size:clamp(9.5px,2.75vw,12px)!important;padding:7px 3px!important;
   }
 }
+
+/* V36: remove Android/Chrome rectangular tap flash from circular audio controls only. */
+.choice-audio,.result-audio-btn,.play-btn,.letter-audio-btn{-webkit-tap-highlight-color:transparent!important}
+.choice-audio:focus,.result-audio-btn:focus,.play-btn:focus,.letter-audio-btn:focus{outline:none!important}
+.choice-audio:focus-visible,.result-audio-btn:focus-visible,.play-btn:focus-visible,.letter-audio-btn:focus-visible{outline:2px solid var(--gold)!important;outline-offset:2px!important}
 </style>\n
 <script id="v30-navigation-smoothing">
 (()=>{

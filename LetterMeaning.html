@@ -975,21 +975,21 @@ async function renderLetterContent(L,c){const box=document.getElementById('lette
 
 const WORD_PRONUNCIATION={"אור":"אוֹר","אהבה":"אַהֲבָה","אמת":"אֱמֶת","אדם":"אָדָם","ארץ":"אֶרֶץ","אבא":"אַבָּא","אמא":"אִמָּא","אוכל":"אֹכֶל","אחד":"אֶחָד","אבן":"אֶבֶן","בית":"בַּיִת","ברכה":"בְּרָכָה","בוקר":"בֹּקֶר","בן":"בֵּן","בת":"בַּת","בריאות":"בְּרִיאוּת","ברק":"בָּרָק","בגד":"בֶּגֶד","בקבוק":"בַּקְבּוּק","בשר":"בָּשָׂר","גן":"גַּן","גשם":"גֶּשֶׁם","גל":"גַּל","גשר":"גֶּשֶׁר","גוף":"גּוּף","גג":"גַּג","גב":"גַּב","גזר":"גֶּזֶר","גמל":"גָּמָל","גרב":"גֶּרֶב","דבורה":"דְּבוֹרָה","דג":"דָּג","דבש":"דְּבַשׁ","דגל":"דֶּגֶל","דרך":"דֶּרֶךְ","דף":"דַּף","דגנים":"דְּגָנִים","דירה":"דִּירָה","דקל":"דֶּקֶל","דקה":"דַּקָּה","הר":"הַר","היכל":"הֵיכָל","הווה":"הוֹוֶה","הוד":"הוֹד","הגנה":"הֲגָנָה","התחלה":"הַתְחָלָה","הצלחה":"הַצְלָחָה","הבנה":"הֲבָנָה","הליכה":"הֲלִיכָה","הרמוניה":"הַרְמוֹנְיָה","ורד":"וֶרֶד","וילון":"וִילוֹן","וילה":"וִילָה","ויטמין":"וִיטָמִין","וידאו":"וִידֵאוֹ","ויכוח":"וִיכּוּחַ","ועד":"וַעַד","ותק":"וֶתֶק","ויזה":"וִיזָה","וופל":"וָפֶל","זהב":"זָהָב","זמן":"זְמַן","זית":"זַיִת","זאב":"זְאֵב","זיכרון":"זִכָּרוֹן","זרע":"זֶרַע","זריחה":"זְרִיחָה","זכוכית":"זְכוּכִית","זנב":"זָנָב","זוג":"זוּג","חיים":"חַיִּים","חוכמה":"חוֹכְמָה","חסד":"חֶסֶד","חלום":"חֲלוֹם","חבר":"חָבֵר","חופש":"חוֹפֶשׁ","חלב":"חָלָב","חוף":"חוֹף","חום":"חוֹם","חתול":"חָתוּל","טוב":"טוֹב","טבע":"טֶבַע","טעם":"טַעַם","טיול":"טִיּוּל","טל":"טַל","טיפה":"טִפָּה","טלפון":"טֶלֶפוֹן","טבעת":"טַבַּעַת","טיסה":"טִיסָה","טהור":"טָהוֹר","יום":"יוֹם","ילד":"יֶלֶד","ים":"יָם","יד":"יָד","יין":"יַיִן","יופי":"יֹפִי","יהלום":"יַהֲלוֹם","ירח":"יָרֵחַ","יער":"יַעַר","יונה":"יוֹנָה","כוח":"כֹּחַ","כסף":"כֶּסֶף","כוכב":"כּוֹכָב","כבוד":"כָּבוֹד","כיסא":"כִּסֵּא","כדור":"כַּדּוּר","כובע":"כּוֹבַע","כפר":"כְּפָר","כיוון":"כִּוּוּן","כנף":"כָּנָף","מלך":"מֶלֶךְ","ברוך":"בָּרוּךְ","לב":"לֵב","לחם":"לֶחֶם","לימוד":"לִימּוּד","לילה":"לַיְלָה","לשון":"לָשׁוֹן","לוח":"לוּחַ","לימון":"לִימוֹן","לידה":"לֵידָה","לבן":"לָבָן","לפיד":"לַפִּיד","מים":"מַיִם","מזל":"מַזָּל","מילה":"מִלָּה","מוח":"מוֹחַ","מחשבה":"מַחֲשָׁבָה","מקום":"מָקוֹם","מפתח":"מַפְתֵּחַ","מתנה":"מַתָּנָה","משפחה":"מִשְׁפָּחָה","שלום":"שָׁלוֹם","עולם":"עוֹלָם","נר":"נֵר","נשמה":"נְשָׁמָה","נחל":"נַחַל","נחש":"נָחָשׁ","נשר":"נֶשֶׁר","ניגון":"נִיגּוּן","נעל":"נַעַל","נמל":"נָמֵל","נקודה":"נְקֻדָּה","נס":"נֵס","חלון":"חַלּוֹן","ספר":"סֵפֶר","סוד":"סוֹד","סוס":"סוּס","סלע":"סֶלַע","סולם":"סֻלָּם","סוכר":"סֻכָּר","סירה":"סִירָה","סל":"סַל","סיפור":"סִפּוּר","סמל":"סֵמֶל","עין":"עַיִן","עץ":"עֵץ","עם":"עַם","ענן":"עָנָן","עבודה":"עֲבוֹדָה","עוגה":"עוּגָה","עוף":"עוֹף","עושר":"עוֹשֶׁר","עיגול":"עִגּוּל","פרח":"פֶּרַח","פנים":"פָּנִים","פרפר":"פַּרְפַּר","פרי":"פְּרִי","פחד":"פַּחַד","פתח":"פֶּתַח","פעמון":"פַּעֲמוֹן","פיל":"פִּיל","פינה":"פִּנָּה","פנס":"פָּנָס","צדק":"צֶדֶק","ציפור":"צִפּוֹר","צל":"צֵל","צמח":"צֶמַח","צבא":"צָבָא","צורה":"צוּרָה","צבע":"צֶבַע","צליל":"צְלִיל","צעד":"צַעַד","צפון":"צָפוֹן","קיץ":"קַיִץ","קול":"קוֹל","קודש":"קֹדֶשׁ","קשת":"קֶשֶׁת","קיר":"קִיר","קפה":"קָפֶה","קצב":"קֶצֶב","קופסה":"קֻפְסָה","קוף":"קוֹף","קרן":"קֶרֶן","רוח":"רוּחַ","ראש":"רֹאשׁ","רגש":"רֶגֶשׁ","רגל":"רֶגֶל","רימון":"רִמּוֹן","רפואה":"רְפוּאָה","רצון":"רָצוֹן","רעיון":"רַעְיוֹן","רכבת":"רַכֶּבֶת","רקיע":"רָקִיעַ","שמש":"שֶׁמֶשׁ","שמיים":"שָׁמַיִם","שם":"שֵׁם","שיר":"שִׁיר","שפה":"שָׂפָה","שער":"שַׁעַר","שבת":"שַׁבָּת","שמחה":"שִׂמְחָה","שנה":"שָׁנָה","תורה":"תּוֹרָה","תפילה":"תְּפִלָּה","תודה":"תּוֹדָה","תקווה":"תִּקְוָה","תינוק":"תִּינוֹק","תפוח":"תַּפּוּחַ","תמונה":"תְּמוּנָה","תכלת":"תְּכֵלֶת","תוף":"תֹּף","תמר":"תָּמָר"};
 const LETTER_PRONUNCIATION={"א":"אָלֶף","ב":"בֵּית","ג":"גִּימֶל","ד":"דָּלֶד","ה":"הֵא","ו":"וָו","ז":"זַיִן","ח":"חֵית","ט":"טֵית","י":"יוֹד","כ":"כַּף","ל":"לָמֶד","מ":"מֵם","נ":"נוּן","ס":"סָמֶךְ","ע":"עַיִן","פ":"פֵּא","צ":"צָדִי","ק":"קוֹף","ר":"רֵישׁ","ש":"שִׁין","ת":"תָּו"};
-const V35_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||'').replace(/\/$/,'');
-const V35_NARRATE_ENDPOINT=V35_API_BASE+'/api/narrate';
-let v35NarrationAudio=null,v35NarrationController=null;
+const V36_API_BASE=String(window.V20_API_BASE||window.V18_API_BASE||'').replace(/\/$/,'');
+const V36_NARRATE_ENDPOINT=V36_API_BASE+'/api/narrate';
+let v36NarrationAudio=null,v36NarrationController=null;
 async function speakHebrewOpenAI(pointed){
-  const text=String(pointed||'').trim();if(!text||!V35_API_BASE)return;
+  const text=String(pointed||'').trim();if(!text||!V36_API_BASE)return;
   try{
-    if(v35NarrationController)v35NarrationController.abort();
-    if(v35NarrationAudio){v35NarrationAudio.pause();v35NarrationAudio.src='';v35NarrationAudio=null;}
-    const controller=new AbortController();v35NarrationController=controller;
-    const res=await fetch(V35_NARRATE_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({text}),signal:controller.signal});
-    if(!res.ok)throw new Error('narration-failed');
+    if(v36NarrationController)v36NarrationController.abort();
+    if(v36NarrationAudio){v36NarrationAudio.pause();v36NarrationAudio.src='';v36NarrationAudio=null;}
+    const controller=new AbortController();v36NarrationController=controller;
+    const res=await fetch(V36_NARRATE_ENDPOINT,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'application/json','Accept':'audio/mpeg'},body:JSON.stringify({text}),signal:controller.signal});
+    if(!res.ok){let d=null;try{d=await res.json();}catch(_e){}throw new Error(String(d?.error||('narration-http-'+res.status)));}
     const blob=await res.blob();if(controller.signal.aborted)return;
-    const url=URL.createObjectURL(blob),audio=new Audio(url);v35NarrationAudio=audio;
-    const cleanup=()=>{URL.revokeObjectURL(url);if(v35NarrationAudio===audio)v35NarrationAudio=null};audio.onended=cleanup;audio.onerror=cleanup;await audio.play();
-  }catch(err){if(err?.name!=='AbortError')console.warn('OpenAI narration unavailable',err);}
+    const url=URL.createObjectURL(blob),audio=new Audio(url);v36NarrationAudio=audio;
+    const cleanup=()=>{URL.revokeObjectURL(url);if(v36NarrationAudio===audio)v36NarrationAudio=null};audio.onended=cleanup;audio.onerror=cleanup;await audio.play();
+  }catch(err){if(err?.name!=='AbortError'){window.__lastNarrationDiagnostic={ok:false,error:String(err?.message||'narration-failed'),at:Date.now()};console.warn('OpenAI narration unavailable',err);}}
 }
 function speak(text){return speakHebrewOpenAI(WORD_PRONUNCIATION[text]||WORD_AUDIO[text]||text)}
 function speakLetter(letter){return speakHebrewOpenAI(LETTER_PRONUNCIATION[letter]||LETTER_AUDIO[letter]||letter)}
@@ -1202,6 +1202,11 @@ document.addEventListener('DOMContentLoaded',function(){
     font-size:clamp(9.5px,2.75vw,12px)!important;padding:7px 3px!important;
   }
 }
+
+/* V36: remove Android/Chrome rectangular tap flash from circular audio controls only. */
+.play-btn,.letter-audio-btn{-webkit-tap-highlight-color:transparent!important}
+.play-btn:focus,.letter-audio-btn:focus{outline:none!important}
+.play-btn:focus-visible,.letter-audio-btn:focus-visible{outline:2px solid var(--gold)!important;outline-offset:2px!important}
 </style>\n
 <script id="v30-navigation-smoothing">
 (()=>{
